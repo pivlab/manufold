@@ -54,16 +54,16 @@ class ManugenAIBaseAgent(BaseAgent, metaclass=ABCMeta):
             suggestion=suggestion
         )
         
-        # Create a structured JSON response that the frontend can parse
-        error_json = error_response.model_dump_json()
-        
+        # Use proper ADK error fields instead of sentinel strings
         return Event(
             author=self.name,
             invocation_id=ctx.invocation_id,
+            error_code=error_type,
+            error_message=error_response.model_dump_json(),
             content=types.Content(
                 role="model",
                 parts=[
-                    types.Part(text=f"MANUGEN_ERROR: {error_json}"),
+                    types.Part(text=f"Error: {message}"),
                 ],
             ),
         )

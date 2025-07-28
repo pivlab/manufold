@@ -3,7 +3,7 @@ import { toast, type ToastOptions } from 'vue3-toastify';
 import { api, request } from "./";
 
 import {
-  ensureSessionExists, extractADKText, sseRequest,
+  ensureSessionExists, extractADKText, sseRequest, checkForADKError,
   type ADKResponse, type ADKResponsePart, type ADKSessionResponse
 } from "./adk";
 
@@ -115,13 +115,17 @@ export const aiWriterAsync = async (input: string, session: ADKSessionResponse|n
 
   console.log("Final event log received:", eventLog);
 
-  toast("Done!", {
-    position: "bottom-left",
-    autoClose: 6000,
-    hideProgressBar: true,
-    type: "success",
-    transition: "bounce",
-  } as ToastOptions);
+  // Only show success toast if no errors occurred
+  const hasErrors = eventLog.some(event => event.errorCode && event.errorMessage);
+  if (!hasErrors) {
+    toast("Done!", {
+      position: "bottom-left",
+      autoClose: 6000,
+      hideProgressBar: true,
+      type: "success",
+      transition: "bounce",
+    } as ToastOptions);
+  }
 
   return eventLog;
 }

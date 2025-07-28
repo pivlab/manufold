@@ -156,6 +156,8 @@ export type ADKResponsePart = {
         "requestedAuthConfigs": object,
         "transferToAgent": string|undefined
     },
+    "errorCode"?: string,
+    "errorMessage"?: string,
     "id": string,
     "timestamp": number
 }
@@ -210,6 +212,35 @@ export const sseRequest = async (
 
 
 /**
+ * Checks if an ADK response part contains an error using proper ADK error fields
+ * @param responsePart - A single ADK response part to check for errors
+ * @returns ManugenError if error is found, null otherwise
+ */
+export const checkForADKError = (responsePart: ADKResponsePart): ManugenError | null => {
+  if (responsePart.errorCode && responsePart.errorMessage) {
+    try {
+      // Try to parse the error message as JSON to get structured error data
+      const errorData = JSON.parse(responsePart.errorMessage);
+      return new ManugenError(
+        errorData.error_type || responsePart.errorCode,
+        errorData.message || 'An error occurred',
+        errorData.details || '',
+        errorData.suggestion || ''
+      );
+    } catch {
+      // If JSON parsing fails, create error from the raw error fields
+      return new ManugenError(
+        responsePart.errorCode,
+        responsePart.errorMessage,
+        '',
+        ''
+      );
+    }
+  }
+  return null;
+};
+
+/**
  * Utility method to extract 'text' sections from an ADK API response
  *
  * @param response - The ADK API response to extract text from
@@ -223,6 +254,14 @@ export const extractADKText = (response: ADKResponse|undefined, onlyLast: boolea
     return "";
   }
 
+  // Check each response part for errors using proper ADK error fields
+  for (const responsePart of response) {
+    const error = checkForADKError(responsePart);
+    if (error) {
+      throw error;
+    }
+  }
+
   const textSections = response
     .filter(item => item.content && item.content.parts)
     .map(item => item.content.parts)
@@ -234,42 +273,6 @@ export const extractADKText = (response: ADKResponse|undefined, onlyLast: boolea
       // otherwise, return the text of the first text part
       return textParts.map(x => x.text).join("\n");
   })
-
-  // Check for structured error responses
-  const allText = textSections.join("\n");
-  if (allText.includes("MANUGEN_ERROR:")) {
-    const errorMatch = allText.match(/MANUGEN_ERROR:\s*(\{.*?\})/s);
-    if (errorMatch) {
-      try {
-        const errorData = JSON.parse(errorMatch[1]);
-        throw new ManugenError(
-          errorData.error_type || 'unknown_error',
-          errorData.message || 'An error occurred',
-          errorData.details || '',
-          errorData.suggestion || ''
-        );
-      } catch (e) {
-        if (e instanceof ManugenError) {
-          throw e;
-        }
-        // If JSON parsing fails, throw a generic error
-        throw new ManugenError(
-          'parse_error',
-          'Failed to parse error response',
-          'The server returned an error but it could not be parsed properly.',
-          'Please try again or contact support if the problem persists.'
-        );
-      }
-    } else {
-      // MANUGEN_ERROR found but no valid JSON match
-      throw new ManugenError(
-        'parse_error',
-        'Malformed error response detected',
-        'The server returned an error but it could not be parsed properly.',
-        'Please try again or contact support if the problem persists.'
-      );
-    }
-  }
 
   if (onlyLast) {
     // if onlyLast is true, return the last text section

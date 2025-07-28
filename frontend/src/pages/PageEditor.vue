@@ -312,6 +312,60 @@ const findPortal = (id: string) => {
   return findChildren(doc, (node) => node.attrs.id === id)?.[0];
 };
 
+/** helper function to handle error display and editor content replacement */
+const handleActionError = (error: any, portalId: string, originalText?: string) => {
+  /** find node of portal created earlier */
+  const portalNode = findPortal(portalId);
+  if (!portalNode) return;
+
+  let errorText: string;
+  let toastMessage: string;
+  let toastDuration: number;
+
+  // Handle ManugenError specially
+  if (error instanceof ManugenError) {
+    // Show a detailed error toast
+    toastMessage = `<strong>${error.message}</strong><br/>${error.suggestion ? `<em>Suggestion: ${error.suggestion}</em>` : ''}`;
+    toastDuration = 10000;
+    
+    // Restore original text if available, otherwise show error message
+    if (originalText) {
+      errorText = originalText;
+    } else {
+      errorText = `⚠️ Error: ${error.message}${error.suggestion ? `\n\nSuggestion: ${error.suggestion}` : ''}`;
+    }
+  } else {
+    // Handle generic errors
+    console.error('Unexpected error in action:', error);
+    toastMessage = 'An unexpected error occurred. Please try again.';
+    toastDuration = 5000;
+    
+    // Restore original text if available, otherwise show generic error message
+    errorText = originalText || '⚠️ An unexpected error occurred. Please try again.';
+  }
+
+  // Show error toast
+  toast.error(toastMessage, {
+    position: "bottom-left",
+    autoClose: toastDuration,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    dangerouslyHTMLString: true,
+  });
+
+  // Update editor content
+  editor.value
+    .chain()
+    /** delete portal node */
+    .deleteRange({
+      from: portalNode.pos,
+      to: portalNode.pos + portalNode.node.nodeSize,
+    })
+    .insertContentAt(portalNode.pos, paragraphizeToJSON(errorText))
+    .run();
+};
+
 /** create func that runs an action and handles placeholder in the editor while its working */
 const action =
   (
@@ -326,6 +380,9 @@ const action =
     /** get context info */
     const context = getContext();
     if (!context) return;
+
+    // Store original text for potential restoration on error
+    const originalText = context.sel;
 
     /** create portal */
     const portalId = addPortal();
@@ -358,62 +415,8 @@ const action =
       /** tell agents component that work is done */
       delete agentsWorking.value[portalId];
 
-      /** find node of portal created earlier */
-      const portalNode = findPortal(portalId);
-      if (!portalNode) return;
-
-      // Handle ManugenError specially
-      if (error instanceof ManugenError) {
-        // Show a detailed error toast
-        toast.error(
-          `<strong>${error.message}</strong><br/>${error.suggestion ? `<em>Suggestion: ${error.suggestion}</em>` : ''}`,
-          {
-            position: "bottom-left",
-            autoClose: 10000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            dangerouslyHTMLString: true,
-          }
-        );
-
-        // Insert an error message in the editor instead of empty content
-        const errorText = `⚠️ Error: ${error.message}${error.suggestion ? `\n\nSuggestion: ${error.suggestion}` : ''}`;
-        
-        editor.value
-          .chain()
-          /** delete portal node */
-          .deleteRange({
-            from: portalNode.pos,
-            to: portalNode.pos + portalNode.node.nodeSize,
-          })
-          .insertContentAt(portalNode.pos, paragraphizeToJSON(errorText))
-          .run();
-      } else {
-        // Handle generic errors
-        console.error('Unexpected error in action:', error);
-        
-        toast.error(
-          'An unexpected error occurred. Please try again.',
-          {
-            position: "bottom-left",
-            autoClose: 5000,
-          }
-        );
-
-        // Insert a generic error message
-        const errorText = '⚠️ An unexpected error occurred. Please try again.';
-        
-        editor.value
-          .chain()
-          /** delete portal node */
-          .deleteRange({
-            from: portalNode.pos,
-            to: portalNode.pos + portalNode.node.nodeSize,
-          })
-          .insertContentAt(portalNode.pos, paragraphizeToJSON(errorText))
-          .run();
-      }
+      // Use helper function to handle error display and editor update
+      handleActionError(error, portalId, originalText);
     }
   };
 
