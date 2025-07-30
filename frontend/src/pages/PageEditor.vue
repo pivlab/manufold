@@ -269,6 +269,8 @@ const getContext = () => {
 
     /** selected text */
     sel: doc.textBetween(from, to, ""),
+    /** selected content as JSON (preserves structure) */
+    selJSON: doc.slice(from, to).content.toJSON(),
     /** current paragraph text */
     selP: p?.textContent ?? "",
 
@@ -313,12 +315,12 @@ const findPortal = (id: string) => {
 };
 
 /** helper function to handle error display and editor content replacement */
-const handleActionError = (error: any, portalId: string, originalText?: string) => {
+const handleActionError = (error: any, portalId: string, originalContent?: any) => {
   /** find node of portal created earlier */
   const portalNode = findPortal(portalId);
   if (!portalNode) return;
 
-  let errorText: string;
+  let errorContent: any;
   let toastMessage: string;
   let toastDuration: number;
 
@@ -328,11 +330,11 @@ const handleActionError = (error: any, portalId: string, originalText?: string) 
     toastMessage = `<strong>${error.message}</strong><br/>${error.suggestion ? `<em>Suggestion: ${error.suggestion}</em>` : ''}`;
     toastDuration = 10000;
     
-    // Restore original text if available, otherwise show error message
-    if (originalText) {
-      errorText = originalText;
+    // Restore original content if available, otherwise show error message
+    if (originalContent) {
+      errorContent = originalContent;
     } else {
-      errorText = `⚠️ Error: ${error.message}${error.suggestion ? `\n\nSuggestion: ${error.suggestion}` : ''}`;
+      errorContent = paragraphizeToJSON(`⚠️ Error: ${error.message}${error.suggestion ? `\n\nSuggestion: ${error.suggestion}` : ''}`);
     }
   } else {
     // Handle generic errors
@@ -340,8 +342,8 @@ const handleActionError = (error: any, portalId: string, originalText?: string) 
     toastMessage = 'An unexpected error occurred. Please try again.';
     toastDuration = 5000;
     
-    // Restore original text if available, otherwise show generic error message
-    errorText = originalText || '⚠️ An unexpected error occurred. Please try again.';
+    // Restore original content if available, otherwise show generic error message
+    errorContent = originalContent || paragraphizeToJSON('⚠️ An unexpected error occurred. Please try again.');
   }
 
   // Show error toast
@@ -355,6 +357,8 @@ const handleActionError = (error: any, portalId: string, originalText?: string) 
   });
 
   // Update editor content
+  if (!editor.value) return;
+  
   editor.value
     .chain()
     /** delete portal node */
@@ -362,7 +366,7 @@ const handleActionError = (error: any, portalId: string, originalText?: string) 
       from: portalNode.pos,
       to: portalNode.pos + portalNode.node.nodeSize,
     })
-    .insertContentAt(portalNode.pos, paragraphizeToJSON(errorText))
+    .insertContentAt(portalNode.pos, errorContent)
     .run();
 };
 
@@ -381,8 +385,8 @@ const action =
     const context = getContext();
     if (!context) return;
 
-    // Store original text for potential restoration on error
-    const originalText = context.sel;
+    // Store original content for potential restoration on error
+    const originalContent = context.selJSON;
 
     /** create portal */
     const portalId = addPortal();
@@ -416,7 +420,7 @@ const action =
       delete agentsWorking.value[portalId];
 
       // Use helper function to handle error display and editor update
-      handleActionError(error, portalId, originalText);
+      handleActionError(error, portalId, originalContent);
     }
   };
 
