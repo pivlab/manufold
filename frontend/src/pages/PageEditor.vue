@@ -142,8 +142,9 @@ import Portal from "./portal";
 import { agentsWorking } from "@/components/AppAgents.vue";
 import type { AgentId } from "@/api/agents";
 import {  aiWriter, aiWriterAsync } from "@/api/endpoints";
-import { type ADKSessionResponse, ensureSessionExists, extractADKText } from "@/api/adk";
+import { type ADKSessionResponse, ensureSessionExists, extractADKText, ManugenError } from "@/api/adk";
 import example from "./example.txt?raw";
+import { toast } from 'vue3-toastify';
 
 /** app info */
 const { VITE_TITLE: title } = import.meta.env;
@@ -170,7 +171,7 @@ onMounted(() => {
     adkUsername.value,
     adkSessionId.value
   ).then((data) => {
-    sessionData.value = data;
+    sessionData.value = data as ADKSessionResponse;
     console.log("ADK session created:", data);
   }).catch((error) => {
     console.error("Error creating ADK session:", error);
@@ -268,6 +269,8 @@ const getContext = () => {
 
     /** selected text */
     sel: doc.textBetween(from, to, ""),
+    /** selected content as JSON (preserves structure) */
+    selJSON: doc.slice(from, to).content.toJSON(),
     /** current paragraph text */
     selP: p?.textContent ?? "",
 
@@ -311,6 +314,62 @@ const findPortal = (id: string) => {
   return findChildren(doc, (node) => node.attrs.id === id)?.[0];
 };
 
+/** helper function to handle error display and editor content replacement */
+const handleActionError = (error: any, portalId: string, originalContent?: any) => {
+  /** find node of portal created earlier */
+  const portalNode = findPortal(portalId);
+  if (!portalNode) return;
+
+  let errorContent: any;
+  let toastMessage: string;
+  let toastDuration: number;
+
+  // Handle ManugenError specially
+  if (error instanceof ManugenError) {
+    // Show a detailed error toast
+    toastMessage = `<strong>${error.message}</strong><br/>${error.suggestion ? `<em>Suggestion: ${error.suggestion}</em>` : ''}`;
+    toastDuration = 10000;
+    
+    // Restore original content if available, otherwise show error message
+    if (originalContent) {
+      errorContent = originalContent;
+    } else {
+      errorContent = paragraphizeToJSON(`⚠️ Error: ${error.message}${error.suggestion ? `\n\nSuggestion: ${error.suggestion}` : ''}`);
+    }
+  } else {
+    // Handle generic errors
+    console.error('Unexpected error in action:', error);
+    toastMessage = 'An unexpected error occurred. Please try again.';
+    toastDuration = 5000;
+    
+    // Restore original content if available, otherwise show generic error message
+    errorContent = originalContent || paragraphizeToJSON('⚠️ An unexpected error occurred. Please try again.');
+  }
+
+  // Show error toast
+  toast.error(toastMessage, {
+    position: "bottom-left",
+    autoClose: toastDuration,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    dangerouslyHTMLString: true,
+  });
+
+  // Update editor content
+  if (!editor.value) return;
+  
+  editor.value
+    .chain()
+    /** delete portal node */
+    .deleteRange({
+      from: portalNode.pos,
+      to: portalNode.pos + portalNode.node.nodeSize,
+    })
+    .insertContentAt(portalNode.pos, errorContent)
+    .run();
+};
+
 /** create func that runs an action and handles placeholder in the editor while its working */
 const action =
   (
@@ -326,6 +385,9 @@ const action =
     const context = getContext();
     if (!context) return;
 
+    // Store original content for potential restoration on error
+    const originalContent = context.selJSON;
+
     /** create portal */
     const portalId = addPortal();
     if (!portalId) return;
@@ -333,25 +395,33 @@ const action =
     /** tell agents component that these agents are working in this portal */
     agentsWorking.value[portalId] = agents;
 
-    /** run actual work func, providing context */
-    const result = await func(context);
+    try {
+      /** run actual work func, providing context */
+      const result = await func(context);
 
-    /** tell agents component that work is done */
-    delete agentsWorking.value[portalId];
+      /** tell agents component that work is done */
+      delete agentsWorking.value[portalId];
 
-    /** find node of portal created earlier */
-    const portalNode = findPortal(portalId);
-    if (!portalNode) return;
+      /** find node of portal created earlier */
+      const portalNode = findPortal(portalId);
+      if (!portalNode) return;
 
-    editor.value
-      .chain()
-      /** delete portal node */
-      .deleteRange({
-        from: portalNode.pos,
-        to: portalNode.pos + portalNode.node.nodeSize,
-      })
-      .insertContentAt(portalNode.pos,  paragraphizeToJSON(result))
-      .run();
+      editor.value
+        .chain()
+        /** delete portal node */
+        .deleteRange({
+          from: portalNode.pos,
+          to: portalNode.pos + portalNode.node.nodeSize,
+        })
+        .insertContentAt(portalNode.pos,  paragraphizeToJSON(result))
+        .run();
+    } catch (error) {
+      /** tell agents component that work is done */
+      delete agentsWorking.value[portalId];
+
+      // Use helper function to handle error display and editor update
+      handleActionError(error, portalId, originalContent);
+    }
   };
 
 const aiWriterSelectAction = (label: string, icon: any, prefix: string = "", agent: AgentId = "aiWriter") => {

@@ -156,6 +156,8 @@ export type ADKResponsePart = {
         "requestedAuthConfigs": object,
         "transferToAgent": string|undefined
     },
+    "errorCode"?: string,
+    "errorMessage"?: string,
     "id": string,
     "timestamp": number
 }
@@ -210,17 +212,54 @@ export const sseRequest = async (
 
 
 /**
+ * Checks if an ADK response part contains an error using proper ADK error fields
+ * @param responsePart - A single ADK response part to check for errors
+ * @returns ManugenError if error is found, null otherwise
+ */
+export const checkForADKError = (responsePart: ADKResponsePart): ManugenError | null => {
+  if (responsePart.errorCode && responsePart.errorMessage) {
+    try {
+      // Try to parse the error message as JSON to get structured error data
+      const errorData = JSON.parse(responsePart.errorMessage);
+      return new ManugenError(
+        errorData.error_type || responsePart.errorCode,
+        errorData.message || 'An error occurred',
+        errorData.details || '',
+        errorData.suggestion || ''
+      );
+    } catch {
+      // If JSON parsing fails, create error from the raw error fields
+      return new ManugenError(
+        responsePart.errorCode,
+        responsePart.errorMessage,
+        '',
+        ''
+      );
+    }
+  }
+  return null;
+};
+
+/**
  * Utility method to extract 'text' sections from an ADK API response
  *
  * @param response - The ADK API response to extract text from
  * @param onlyLast - If true, returns only the last text section; if false,
  *                  returns all text sections concatenated with newlines
- * @returns The extracted text as a string
+ * @returns The extracted text as a string, or throws an error if error response detected
 */
 export const extractADKText = (response: ADKResponse|undefined, onlyLast: boolean = true): string => {
   // if response is undefined, return an empty string
   if (!response) {
     return "";
+  }
+
+  // Check each response part for errors using proper ADK error fields
+  for (const responsePart of response) {
+    const error = checkForADKError(responsePart);
+    if (error) {
+      throw error;
+    }
   }
 
   const textSections = response
@@ -242,5 +281,22 @@ export const extractADKText = (response: ADKResponse|undefined, onlyLast: boolea
   else {
     // if onlyLast is false, return all text sections concatenated
     return textSections.join("\n");
+  }
+}
+
+/**
+ * Custom error class for Manugen AI errors
+ */
+export class ManugenError extends Error {
+  public readonly errorType: string;
+  public readonly details: string;
+  public readonly suggestion: string;
+
+  constructor(errorType: string, message: string, details: string = '', suggestion: string = '') {
+    super(message);
+    this.name = 'ManugenError';
+    this.errorType = errorType;
+    this.details = details;
+    this.suggestion = suggestion;
   }
 }
