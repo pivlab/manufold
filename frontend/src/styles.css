@@ -1,28 +1,14 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Outfit", sans-serif;
+  --font-mono: "Sometype Mono", monospace;
+}
 
 * {
-  font-family: "Mullish", sans-serif;
+  @apply font-sans;
 }
 
-button {
-  cursor: pointer;
-}
-
-.dragging {
-  @apply inset-ring-4 inset-ring-indigo-500;
-}
-
-.lucide {
-  width: unset;
-  height: 1em;
-}
-
-.tippy-box {
-  font: inherit !important;
-  @apply rounded-md;
-}
-
-.tippy-content:has(:nth-child(1)) {
-  padding: 0 !important;
+#app {
+  @apply flex min-h-screen flex-col;
 }
