@@ -13,6 +13,5 @@
     "^./",
     "^../"
   ],
-  "importOrderParserPlugins": ["typescript", "importAssertions"],
-  "htmlWhitespaceSensitivity": "strict"
+  "importOrderParserPlugins": ["typescript", "importAssertions"]
 }

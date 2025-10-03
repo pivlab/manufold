@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Outfit", sans-serif;
-  --font-mono: "Sometype Mono", monospace;
+  --color-primary: #ad1457;
+  --color-secondary: #ffedd5;
+
+  --font-sans: "Raleway", sans-serif;
 }
 
 * {
@@ -11,4 +13,13 @@
 
 #app {
   @apply flex min-h-screen flex-col;
+}
+
+button {
+  @apply inline-flex cursor-pointer items-center justify-center gap-2;
+}
+
+.lucide {
+  width: unset;
+  height: 1em;
 }

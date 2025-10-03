@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -70 140 220">
+  <!-- pen head -->
+  <path
+    fill="#cbd5e1"
+    stroke="#cbd5e1"
+    stroke-width="10"
+    stroke-linejoin="round"
+    d="
+      M -25 43.302
+      A 80 80 0 0 1 -35 90
+      A 100 100 0 0 1 0 140
+      A 100 100 0 0 1 35 90
+      A 80 80 0 0 1 25 43.302
+      L 0 57.735
+      z
+    "
+  />
+
+  <!-- shadow clip -->
+  <mask id="shadow" x="-70" y="-70" width="140" height="240">
+    <path
+      fill="white"
+      stroke="white"
+      stroke-width="10"
+      stroke-linejoin="round"
+      d="
+        M -25 43.302
+        A 80 80 0 0 1 -35 90
+        L 35 90
+        A 80 80 0 0 1 25 43.302
+        L 0 57.735
+        z
+      "
+    />
+  </mask>
+
+  <!-- shadow -->
+  <path
+    mask="url(#shadow)"
+    fill="none"
+    stroke="#94a3b8"
+    stroke-width="30"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    d="
+      M -50 28.868
+      L 0 57.735
+      L 50 28.868
+    "
+  />
+
+  <!-- pen divot -->
+  <circle cx="0" cy="90" r="10" fill="#ad1457" />
+  <path
+    fill="none"
+    stroke="#ad1457"
+    stroke-width="10"
+    stroke-linecap="round"
+    d="
+      M 0 90
+      L 0 140
+    "
+  />
+
+  <!-- hex -->
+  <path
+    fill="white"
+    stroke="#ad1457"
+    stroke-width="15"
+    stroke-linejoin="round"
+    d="
+      M 0 57.735
+      L 50 28.868
+      L 50 -28.868
+      L 0 -57.735
+      L -50 -28.868
+      L -50 28.868
+      z
+    "
+  />
+
+  <!-- eyes -->
+  <circle cx="-20" cy="-5" r="10" fill="#ad1457" />
+  <circle cx="20" cy="-5" r="10" fill="#ad1457" />
+</svg>
