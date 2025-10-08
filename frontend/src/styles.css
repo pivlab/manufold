@@ -5,9 +5,14 @@
   --color-secondary: #ffedd5;
 
   --font-sans: "Raleway", sans-serif;
+  --font-mono: "Inconsolata", monospace;
 }
 
 * {
+  @apply min-w-0;
+}
+
+html {
   @apply font-sans;
 }
 
@@ -15,8 +20,64 @@
   @apply flex min-h-screen flex-col;
 }
 
+h1 {
+  @apply text-4xl font-bold;
+}
+
+h2 {
+  @apply text-3xl font-bold;
+}
+
+h3 {
+  @apply text-2xl font-bold;
+}
+
+h4 {
+  @apply text-xl font-bold;
+}
+
+h5 {
+  @apply text-lg font-bold;
+}
+
+h6 {
+  @apply text-base font-bold;
+}
+
+a {
+  @apply text-primary underline hover:text-black;
+}
+
 button {
   @apply inline-flex cursor-pointer items-center justify-center gap-2;
+}
+
+ul {
+  @apply list-disc pl-6;
+}
+
+ol {
+  @apply list-decimal pl-6;
+}
+
+li {
+  @apply pl-2;
+}
+
+blockquote {
+  @apply border-l-4 border-gray-200 pl-4 italic;
+}
+
+pre:has(code) {
+  @apply bg-gray-700 p-2 font-mono text-white;
+}
+
+:not(pre) > code {
+  @apply bg-gray-200 p-1 font-mono;
+}
+
+hr {
+  @apply my-4 h-[2px] border-none bg-gray-200;
 }
 
 .lucide {

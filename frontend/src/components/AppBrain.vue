@@ -1,5 +1,5 @@
 <template>
-  <svg viewBox="-1 -1 2 2" class="overflow-visible">
+  <svg v-if="thinking" viewBox="-1 -1 2 2" class="overflow-visible">
     <line
       v-for="([a, b], index) in links"
       :key="index"
@@ -31,6 +31,23 @@
     />
   </svg>
 </template>
+<script lang="ts">
+/** on/off */
+const thinking = ref(false);
+
+let latest: symbol;
+
+/** start animation */
+export const think = () => {
+  latest = Symbol();
+  const current = latest;
+  thinking.value = true;
+  /** stop animation */
+  return () => {
+    if (current === latest) thinking.value = false;
+  };
+}
+</script>
 
 <script setup lang="ts">
 import { nextTick, ref } from "vue";

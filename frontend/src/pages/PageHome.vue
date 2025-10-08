@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { useTemplateRef } from "vue";
+import { computed, useTemplateRef } from "vue";
+import { useStorage } from "@vueuse/core";
 import { Download, Lightbulb, Printer, Upload } from "lucide-vue-next";
+import { micromark } from "micromark";
 import logo from "@/assets/logo.svg";
 import AppBrain from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
@@ -9,6 +11,9 @@ const { VITE_TITLE } = import.meta.env;
 
 const inputElement = useTemplateRef("inputElement");
 const outputElement = useTemplateRef("outputElement");
+
+const input = useStorage("input", "");
+const output = computed(() => micromark(input.value));
 </script>
 
 <template>
@@ -37,12 +42,14 @@ const outputElement = useTemplateRef("outputElement");
   <main class="flex grow gap-4 p-4">
     <textarea
       ref="inputElement"
-      class="w-[50%] resize-x rounded-lg border-1 border-black/25 p-4"
+      v-model="input"
+      class="w-[50%] shrink-0 resize-x rounded-lg border-1 border-gray-300 p-4"
     />
 
     <div
       ref="outputElement"
-      class="grow rounded-lg border-black/25 bg-gray-50 p-4"
+      class="flex flex-grow flex-col gap-4 rounded-lg border-1 border-gray-300 bg-gray-50 p-4"
+      v-html="output"
     />
   </main>
 </template>
