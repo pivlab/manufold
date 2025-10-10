@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "floating-vue/dist/style.css";
 
 @theme {
   --color-primary: #ad1457;
@@ -83,4 +84,16 @@ hr {
 .lucide {
   width: unset;
   height: 1em;
+}
+
+.v-popper__popper {
+  @apply duration-100!;
+}
+
+.v-popper__inner {
+  @apply rounded-lg! bg-gray-700! px-4! py-2! text-white!;
+}
+
+.v-popper__arrow-outer {
+  @apply border-gray-700!;
 }

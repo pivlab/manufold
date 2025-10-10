@@ -17,7 +17,7 @@ export default defineConfigWithVueTs(
     name: "app/files-to-lint",
     files: ["**/*.{ts,mts,tsx,vue}"],
     rules: {
-      "@vue/no-v-html": "off",
+      "vue/no-v-html": "off",
     },
   },
 );

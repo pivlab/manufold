@@ -6,6 +6,8 @@ import { micromark } from "micromark";
 import logo from "@/assets/logo.svg";
 import AppBrain from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
+import { toast } from "@/components/AppToasts";
+import example from "./example.md?raw";
 
 const { VITE_TITLE } = import.meta.env;
 
@@ -22,7 +24,15 @@ const output = computed(() => micromark(input.value));
   >
     <div class="flex flex-wrap items-center gap-2">
       <AppButton v-tooltip="'Upload'"><Upload /></AppButton>
-      <AppButton v-tooltip="'Example'"><Lightbulb /></AppButton>
+      <AppButton
+        v-tooltip="'Example'"
+        @click="
+          input = example;
+          toast('Added example input', 'success');
+        "
+      >
+        <Lightbulb
+      /></AppButton>
     </div>
 
     <div
