@@ -1,36 +1,3 @@
-<template>
-  <svg v-if="thinking" viewBox="-1 -1 2 2" class="overflow-visible">
-    <line
-      v-for="([a, b], index) in links"
-      :key="index"
-      stroke="currentColor"
-      :stroke-width="size / 3"
-      :x1="a.x"
-      :y1="a.y"
-      :x2="b.x"
-      :y2="b.y"
-      path-length="1"
-      class="animate"
-      :style="{
-        animationDuration: duration + 's',
-        animationDelay: linkDelay + a.d * stagger + 's',
-      }"
-    />
-    <circle
-      v-for="({ x, y, d }, index) in points"
-      :key="index"
-      fill="currentColor"
-      :r="size"
-      :cx="x"
-      :cy="y"
-      class="animate"
-      :style="{
-        animationDuration: duration + 's',
-        animationDelay: d * stagger + 's',
-      }"
-    />
-  </svg>
-</template>
 <script lang="ts">
 /** on/off */
 const thinking = ref(false);
@@ -46,7 +13,7 @@ export const think = () => {
   return () => {
     if (current === latest) thinking.value = false;
   };
-}
+};
 </script>
 
 <script setup lang="ts">
@@ -127,6 +94,40 @@ const animate = async () => {
 animate();
 useIntervalFn(animate, (duration + stagger) * 1000);
 </script>
+
+<template>
+  <svg v-if="thinking" viewBox="-1 -1 2 2" class="overflow-visible">
+    <line
+      v-for="([a, b], index) in links"
+      :key="index"
+      stroke="currentColor"
+      :stroke-width="size / 3"
+      :x1="a.x"
+      :y1="a.y"
+      :x2="b.x"
+      :y2="b.y"
+      path-length="1"
+      class="animate"
+      :style="{
+        animationDuration: duration + 's',
+        animationDelay: linkDelay + a.d * stagger + 's',
+      }"
+    />
+    <circle
+      v-for="({ x, y, d }, index) in points"
+      :key="index"
+      fill="currentColor"
+      :r="size"
+      :cx="x"
+      :cy="y"
+      class="animate"
+      :style="{
+        animationDuration: duration + 's',
+        animationDelay: d * stagger + 's',
+      }"
+    />
+  </svg>
+</template>
 
 <style scoped>
 circle.animate {
