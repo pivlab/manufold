@@ -20,15 +20,68 @@ export const parsePdf = async (buffer: ArrayBuffer) => {
   return text;
 };
 
+/** support text file extensions */
+export const textExtensions = [".txt", ".md", ".doc", ".docx", ".pdf"];
+
+/** supported text file mime types */
+export const textAccepts = [
+  "text/plain",
+  "text/markdown",
+  "application/pdf",
+  "application/msword",
+];
+
+/** support image file extensions */
+export const imageExtensions = [".png", ".jpeg", ".jpg", ".gif", ".svg"];
+
+/** supported image file mime types */
+export const imageAccepts = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/svg+xml",
+];
+
 /** parse file as text */
 export const parseFile = async (file: File) => {
-  let text = "";
+  let data = "";
+
+  /** parse as appropriate format */
 
   if (file.name.match(/\.(doc|docx)$/))
-    text = await parseWordDoc(await file.arrayBuffer());
+    /** word doc */
+    data = await parseWordDoc(await file.arrayBuffer());
   else if (file.name.match(/\.(pdf)$/))
-    text = await parsePdf(await file.arrayBuffer());
-  else text = await file.text();
+    /** pdf */
+    data = await parsePdf(await file.arrayBuffer());
+  else if (file.name.match(/\.(gif|jpg|jpeg|png)$/))
+    /** image */
+    data = window.btoa(
+      Array.from(new Uint8Array(await file.arrayBuffer()))
+        .map((b) => String.fromCharCode(b))
+        .join(""),
+    );
+  else if (file.name.match(/\.(svg)$/))
+    /** svg */
+    data = window.btoa(await file.text());
+  else
+    /** plain text */
+    data = await file.text();
 
-  return { text, filename: file.name };
+  /** extension pattern */
+  const extensions = textExtensions
+    .concat(imageExtensions)
+    .map((ext) => ext.replace(/^\./, ""))
+    .join("|");
+
+  return {
+    data,
+    uri: `data:${file.type};base64,${data}`,
+    filename: file.name,
+    name: file.name.replace(new RegExp(`\\.(${extensions})$`, "i"), ""),
+    type: file.type,
+  };
 };
+
+export type Upload = Awaited<ReturnType<typeof parseFile>>;

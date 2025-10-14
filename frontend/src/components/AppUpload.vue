@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watchEffect } from "vue";
 import { useEventListener } from "@vueuse/core";
-import { LoaderCircle, Upload } from "lucide-vue-next";
+import { LoaderCircle } from "lucide-vue-next";
 import AppButton from "@/components/AppButton.vue";
-import { parseFile } from "@/util/upload";
+import { parseFile, type Upload } from "@/util/upload";
 
 type Props = {
   /** file types to accept */
@@ -16,12 +16,9 @@ type Props = {
 
 const { dropZone = document.body, tooltip = null } = defineProps<Props>();
 
-/** reactive drop zone */
-const _dropzone = computed(() => dropZone ?? document.body);
-
 type Emits = {
   dragging: [boolean];
-  files: [{ text: string; filename: string }[]];
+  files: [Upload[]];
 };
 
 const emit = defineEmits<Emits>();
@@ -32,8 +29,14 @@ type Slots = {
 
 defineSlots<Slots>();
 
+const buttonElement = useTemplateRef("buttonElement");
 /** actual file input element */
-const input = useTemplateRef("input");
+const inputElement = useTemplateRef("inputElement");
+
+/** reactive drop zone */
+const _dropzone = computed(
+  () => dropZone ?? buttonElement.value?.element ?? document.body,
+);
 
 /** dragging state */
 const dragging = ref(false);
@@ -63,11 +66,11 @@ const onLoad = async (fileList: FileList | null) => {
   if (files) emit("files", files);
 
   /** reset file input so the same file could be re-selected */
-  if (input.value) input.value.value = "";
+  if (inputElement.value) inputElement.value.value = "";
 };
 
 /** on upload button click */
-const onClick = () => input.value?.click();
+const onClick = () => inputElement.value?.click();
 
 /** on file input change */
 const onChange = (event: Event) =>
@@ -88,12 +91,18 @@ useEventListener(_dropzone, "drop", (event) => {
 </script>
 
 <template>
-  <AppButton v-tooltip="tooltip" :disabled="uploading" @click="onClick">
-    <LoaderCircle v-if="uploading" class="spin" />
-    <Upload v-else />
+  <AppButton
+    ref="buttonElement"
+    v-tooltip="tooltip"
+    design="primary"
+    :disabled="uploading"
+    @click="onClick"
+  >
+    <LoaderCircle v-if="uploading" class="animate-spin" />
+    <slot v-else />
   </AppButton>
   <input
-    ref="input"
+    ref="inputElement"
     class="sr-only"
     type="file"
     :accept="accept.join(',')"

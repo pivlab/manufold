@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { computed, useTemplateRef } from "vue";
+import { computed, ref, useTemplateRef } from "vue";
 import { useStorage } from "@vueuse/core";
 import {
+  Upload as ArrowUp,
   Code,
   Download,
   Lightbulb,
+  ListOrdered,
+  Paperclip,
   Printer,
+  Trash,
   Type,
-  Upload,
 } from "lucide-vue-next";
 import { micromark } from "micromark";
 import logo from "@/assets/logo.svg";
@@ -16,11 +19,19 @@ import AppButton from "@/components/AppButton.vue";
 import AppUpload from "@/components/AppUpload.vue";
 import styles from "@/styles.css?inline";
 import { downloadHtml, downloadMd } from "@/util/download";
+import {
+  imageAccepts,
+  imageExtensions,
+  textAccepts,
+  textExtensions,
+  type Upload,
+} from "@/util/upload";
 import example from "./example.md?raw";
 
 const { VITE_TITLE } = import.meta.env;
 
 /** elements */
+const figureElement = useTemplateRef("figureElement");
 const inputElement = useTemplateRef("inputElement");
 const outputElement = useTemplateRef("outputElement");
 
@@ -60,18 +71,11 @@ const savePdf = () => {
   outputElement.value?.classList.remove("print");
 };
 
-/** upload file types */
-const accept = [
-  ".txt",
-  ".md",
-  ".pdf",
-  ".doc",
-  ".docx",
-  "text/plain",
-  "text/markdown",
-  "application/pdf",
-  "application/msword",
-];
+/** attached files */
+const figures = ref<Upload[]>([]);
+
+/** show figures */
+const showFigures = ref(false);
 </script>
 
 <template>
@@ -81,12 +85,23 @@ const accept = [
     <div class="flex flex-wrap items-center gap-2">
       <AppUpload
         tooltip="Upload input file"
-        :accept="accept"
+        :accept="textAccepts.concat(textExtensions)"
         :drop-zone="inputElement"
-        @files="(files) => files[0] && (input = files[0].text ?? '')"
+        @files="
+          (files) => (input = files.map((file) => file.data).join('\n\n'))
+        "
       >
-        <Upload />
+        <ArrowUp />
       </AppUpload>
+
+      <AppButton
+        v-tooltip="showFigures ? 'Hide figures' : 'Show figures'"
+        :active="showFigures"
+        @click="showFigures = !showFigures"
+      >
+        <Paperclip />
+      </AppButton>
+
       <AppButton v-tooltip="'Try example input'" @click="input = example">
         <Lightbulb />
       </AppButton>
@@ -102,7 +117,7 @@ const accept = [
 
     <div class="flex flex-wrap items-center gap-2">
       <VDropdown>
-        <AppButton v-tooltip="'Download output'">
+        <AppButton v-tooltip="'Download output'" design="primary">
           <Download />
         </AppButton>
 
@@ -123,7 +138,69 @@ const accept = [
     </div>
   </header>
 
-  <main class="flex grow gap-4 p-4">
+  <main class="flex h-0 grow gap-4 p-4">
+    <aside
+      v-show="showFigures"
+      ref="figureElement"
+      class="flex w-60 shrink-0 resize-x flex-col items-center gap-4 rounded border-1 border-gray-300 bg-gray-50 p-2 transition-[margin,translate]"
+    >
+      <div class="flex items-center gap-4">
+        <b>Figures</b>
+        {{ figures.length }}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <AppUpload
+          tooltip="Upload figure"
+          :accept="imageAccepts.concat(imageExtensions)"
+          :drop-zone="figureElement"
+          @files="(files) => (figures = figures.concat(files))"
+        >
+          <ArrowUp />
+        </AppUpload>
+        <template v-if="figures.length">
+          <AppButton
+            v-tooltip="'Auto-name figures 1, 2, 3...'"
+            @click="
+              figures.forEach(
+                (figure, index) => (figure.name = `Figure ${index + 1}`),
+              )
+            "
+          >
+            <ListOrdered />
+          </AppButton>
+          <AppButton v-tooltip="'Delete all figures'" @click="figures = []">
+            <Trash />
+          </AppButton>
+        </template>
+      </div>
+
+      <div class="flex w-full flex-col items-center gap-4 overflow-y-auto">
+        <div
+          v-for="(figure, index) of figures"
+          :key="index"
+          class="flex w-full flex-col gap-2"
+        >
+          <div class="max-h-60 max-w-full">
+            <img
+              v-tooltip="figure.filename"
+              :src="figure.uri"
+              class="h-full w-full object-cover"
+            />
+          </div>
+          <div class="flex gap-2">
+            <input v-model="figure.name" placeholder="Name" class="grow" />
+            <AppButton
+              v-tooltip="'Delete figure'"
+              @click="figures.splice(index, 1)"
+            >
+              <Trash />
+            </AppButton>
+          </div>
+        </div>
+      </div>
+    </aside>
+
     <textarea
       ref="inputElement"
       v-model="input"
@@ -138,3 +215,11 @@ const accept = [
     />
   </main>
 </template>
+
+<style scoped>
+@reference "tailwindcss";
+
+main > * {
+  @apply overflow-y-auto;
+}
+</style>

@@ -77,6 +77,10 @@ pre:has(code) {
   @apply bg-gray-200 p-1 font-mono;
 }
 
+input {
+  @apply rounded border-1 border-gray-300 bg-gray-50 px-2 py-1;
+}
+
 hr {
   @apply my-4 h-[2px] border-none bg-gray-200;
 }
