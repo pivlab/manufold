@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue";
+import draggableComponent from "vuedraggable";
 import { useStorage } from "@vueuse/core";
 import {
   Upload as ArrowUp,
@@ -95,7 +96,7 @@ const showFigures = ref(false);
       </AppUpload>
 
       <AppButton
-        v-tooltip="showFigures ? 'Hide figures' : 'Show figures'"
+        v-tooltip="showFigures ? 'Hide figures panel' : 'Show figures planel'"
         :active="showFigures"
         @click="showFigures = !showFigures"
       >
@@ -175,30 +176,33 @@ const showFigures = ref(false);
         </template>
       </div>
 
-      <div class="flex w-full flex-col items-center gap-4 overflow-y-auto">
-        <div
-          v-for="(figure, index) of figures"
-          :key="index"
-          class="flex w-full flex-col gap-2"
-        >
-          <div class="max-h-60 max-w-full">
-            <img
-              v-tooltip="figure.filename"
-              :src="figure.uri"
-              class="h-full w-full object-cover"
-            />
+      <draggableComponent
+        v-model="figures"
+        item-key="id"
+        handle="img"
+        class="flex w-full flex-col items-center gap-4 overflow-y-auto"
+      >
+        <template #item="{ element, index }">
+          <div class="flex w-full flex-col gap-2">
+            <div class="max-h-60 max-w-full">
+              <img
+                v-tooltip="`${element.filename}<br>Drag to reorder`"
+                :src="element.uri"
+                class="h-full w-full cursor-grab object-cover"
+              />
+            </div>
+            <div class="flex gap-2">
+              <input v-model="element.name" placeholder="Name" class="grow" />
+              <AppButton
+                v-tooltip="'Delete figure'"
+                @click="figures.splice(index, 1)"
+              >
+                <Trash />
+              </AppButton>
+            </div>
           </div>
-          <div class="flex gap-2">
-            <input v-model="figure.name" placeholder="Name" class="grow" />
-            <AppButton
-              v-tooltip="'Delete figure'"
-              @click="figures.splice(index, 1)"
-            >
-              <Trash />
-            </AppButton>
-          </div>
-        </div>
-      </div>
+        </template>
+      </draggableComponent>
     </aside>
 
     <textarea

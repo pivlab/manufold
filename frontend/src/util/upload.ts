@@ -1,3 +1,4 @@
+import { uniqueId } from "lodash";
 import { extractRawText } from "mammoth";
 import * as pdfjs from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker?url";
@@ -76,6 +77,7 @@ export const parseFile = async (file: File) => {
     .join("|");
 
   return {
+    id: uniqueId(),
     data,
     uri: `data:${file.type};base64,${data}`,
     filename: file.name,

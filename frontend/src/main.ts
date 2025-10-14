@@ -15,6 +15,7 @@ app.use(FloatingVue, {
         show: 50,
         // hide: 1000000, // debug
       },
+      html: true,
     },
     dropdown: {
       overflowPadding: 10,

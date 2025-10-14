@@ -118,3 +118,8 @@ hr {
 html:has(.print) :not(:has(.print), .print, .print *) {
   @apply hidden!;
 }
+
+.sortable-ghost,
+.sortable-chosen {
+  @apply opacity-25 grayscale;
+}
