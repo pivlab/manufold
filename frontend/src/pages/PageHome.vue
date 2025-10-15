@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from "vue";
 import draggableComponent from "vuedraggable";
-import { useStorage } from "@vueuse/core";
+import { useEventListener, useStorage } from "@vueuse/core";
 import {
   Upload as ArrowUp,
   Code,
@@ -18,11 +18,14 @@ import logo from "@/assets/logo.svg";
 import AppBrain from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
 import AppUpload from "@/components/AppUpload.vue";
+import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import styles from "@/styles.css?inline";
 import { downloadHtml, downloadMd } from "@/util/download";
+import { sleep } from "@/util/misc";
 import {
   imageAccepts,
   imageExtensions,
+  parseFile,
   textAccepts,
   textExtensions,
   type Upload,
@@ -36,14 +39,44 @@ const figureElement = useTemplateRef("figureElement");
 const inputElement = useTemplateRef("inputElement");
 const outputElement = useTemplateRef("outputElement");
 
+/** for dev */
+window.localStorage.clear();
+
 /** current input */
 const input = useStorage("input", "");
+
+/** document name */
+const name = useStorage("name", "");
+
+/** document name, with fallback */
+const nameFallback = computed(() => name.value.trim() || "manuscript");
+
+/** input upload */
+const upload = ref<Upload | null>(null);
 
 /** current output */
 const output = computed(() => micromark(input.value));
 
+/** upload input file */
+const uploadInput = (files: Upload[]) => {
+  input.value = files.map((file) => file.data).join("\n\n");
+  if (files[0]) {
+    name.value = files[0].name;
+    upload.value = { ...files[0] };
+  }
+};
+
+/** load example file */
+const tryExample = async () => {
+  input.value = example;
+  name.value = "Example Manuscript";
+  upload.value = await parseFile(
+    new File([example], "example.md", { type: "text/markdown" }),
+  );
+};
+
 /** save output as markdown */
-const saveMd = () => downloadMd(output.value, "manuscript");
+const saveMd = () => downloadMd(output.value, nameFallback.value);
 
 /** save output as html */
 const saveHtml = () => {
@@ -62,15 +95,27 @@ ${content}
 </body>
 </html>
 `;
-  downloadHtml(content, "manuscript");
+  downloadHtml(content, nameFallback.value);
 };
 
 /** print output as pdf */
-const savePdf = () => {
+const savePdf = async () => {
+  const oldTitle = document.title;
+  document.title = nameFallback.value;
   outputElement.value?.classList.add("print");
+  await sleep();
   window.print();
   outputElement.value?.classList.remove("print");
+  document.title = oldTitle;
 };
+
+/** intercept ctrl + p */
+useEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === "p") {
+    event.preventDefault();
+    savePdf();
+  }
+});
 
 /** attached files */
 const figures = ref<Upload[]>([]);
@@ -81,16 +126,14 @@ const showFigures = ref(false);
 
 <template>
   <header
-    class="bg-secondary border-primary flex flex-wrap items-center justify-between gap-4 border-b-1 p-4"
+    class="bg-secondary flex flex-wrap items-center justify-between gap-4 p-4"
   >
-    <div class="flex flex-wrap items-center gap-2">
+    <div>
       <AppUpload
-        tooltip="Upload input file"
+        tooltip="Upload manuscript content files"
         :accept="textAccepts.concat(textExtensions)"
         :drop-zone="inputElement"
-        @files="
-          (files) => (input = files.map((file) => file.data).join('\n\n'))
-        "
+        @files="uploadInput"
       >
         <ArrowUp />
       </AppUpload>
@@ -103,20 +146,22 @@ const showFigures = ref(false);
         <Paperclip />
       </AppButton>
 
-      <AppButton v-tooltip="'Try example input'" @click="input = example">
+      <AppButton v-tooltip="'Try example input'" @click="tryExample">
         <Lightbulb />
       </AppButton>
+
+      <input v-model="name" placeholder="New Manuscript" />
+
+      <AppUploadBadge v-if="upload" :upload="upload" />
     </div>
 
-    <div
-      class="text-primary relative flex items-center gap-4 text-2xl uppercase"
-    >
+    <div class="text-primary gap-4! text-2xl uppercase">
       <img :src="logo" class="h-10" />
-      <span>{{ VITE_TITLE }}</span>
+      <span class="whitespace-nowrap">{{ VITE_TITLE }}</span>
       <AppBrain class="absolute inset-0 left-[calc(100%+1rem)] h-10" />
     </div>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div>
       <VDropdown>
         <AppButton v-tooltip="'Download output'" design="primary">
           <Download />
@@ -143,16 +188,16 @@ const showFigures = ref(false);
     <aside
       v-show="showFigures"
       ref="figureElement"
-      class="flex w-60 shrink-0 resize-x flex-col items-center gap-4 rounded border-1 border-gray-300 bg-gray-50 p-2 transition-[margin,translate]"
+      class="flex w-60 shrink-0 resize-x flex-col items-center rounded-lg bg-slate-100 transition-[margin,translate]"
     >
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 p-4">
         <b>Figures</b>
         {{ figures.length }}
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 p-4">
         <AppUpload
-          tooltip="Upload figure"
+          tooltip="Upload figures"
           :accept="imageAccepts.concat(imageExtensions)"
           :drop-zone="figureElement"
           @files="(files) => (figures = figures.concat(files))"
@@ -180,19 +225,22 @@ const showFigures = ref(false);
         v-model="figures"
         item-key="id"
         handle="img"
-        class="flex w-full flex-col items-center gap-4 overflow-y-auto"
+        class="flex w-full flex-col items-center gap-4 overflow-y-auto p-4"
       >
-        <template #item="{ element, index }">
+        <template
+          #item="{ element, index }: { element: Upload; index: number }"
+        >
           <div class="flex w-full flex-col gap-2">
             <div class="max-h-60 max-w-full">
               <img
-                v-tooltip="`${element.filename}<br>Drag to reorder`"
+                v-tooltip="'Drag to reorder'"
                 :src="element.uri"
-                class="h-full w-full cursor-grab object-cover"
+                class="h-full w-full cursor-grab object-cover shadow"
               />
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
               <input v-model="element.name" placeholder="Name" class="grow" />
+              <AppUploadBadge :upload="element" />
               <AppButton
                 v-tooltip="'Delete figure'"
                 @click="figures.splice(index, 1)"
@@ -209,12 +257,12 @@ const showFigures = ref(false);
       ref="inputElement"
       v-model="input"
       placeholder="Start writing your manuscript Markdown here"
-      class="w-[50%] shrink-0 resize-x rounded-lg border-1 border-gray-300 p-4"
+      class="w-[50%] shrink-0 resize-x p-4!"
     />
 
     <div
       ref="outputElement"
-      class="flex flex-grow flex-col gap-4 rounded-lg border-1 border-gray-300 bg-gray-50 p-4"
+      class="flex flex-grow flex-col gap-4 rounded-lg bg-slate-100 p-4"
       v-html="output"
     />
   </main>
@@ -222,6 +270,22 @@ const showFigures = ref(false);
 
 <style scoped>
 @reference "tailwindcss";
+
+header > * {
+  @apply flex grow basis-0 flex-wrap items-center gap-2;
+}
+
+header > :first-child {
+  @apply justify-start;
+}
+
+header > :nth-child(2) {
+  @apply justify-center;
+}
+
+header > :last-child {
+  @apply justify-end;
+}
 
 main > * {
   @apply overflow-y-auto;

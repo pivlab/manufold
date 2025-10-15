@@ -24,7 +24,7 @@ import { toasts, types } from "./AppToasts";
       />
       <span class="flex-1">{{ toast.message }}</span>
       <button
-        class="h-5 w-5 text-gray-500 hover:text-gray-900"
+        class="h-5 w-5 text-slate-500 hover:text-slate-900"
         aria-label="Close"
         @click="toasts = toasts.filter((t) => t.id !== toast.id)"
       >

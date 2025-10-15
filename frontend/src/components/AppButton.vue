@@ -20,8 +20,8 @@ defineExpose({ element });
     :class="[
       active ? 'border-2 border-current' : '',
       design === 'primary'
-        ? 'bg-primary text-white hover:bg-gray-700'
-        : 'text-primary hover:text-gray-700',
+        ? 'bg-primary text-white hover:bg-slate-700'
+        : 'text-primary hover:text-slate-700',
     ]"
   >
     <slot />

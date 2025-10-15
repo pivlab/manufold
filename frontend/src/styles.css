@@ -9,10 +9,6 @@
   --font-mono: "Inconsolata", monospace;
 }
 
-* {
-  @apply min-w-0;
-}
-
 html {
   @apply font-sans;
 }
@@ -66,23 +62,27 @@ li {
 }
 
 blockquote {
-  @apply border-l-4 border-gray-200 pl-4 italic;
+  @apply border-l-4 border-slate-200 pl-4 italic;
 }
 
 pre:has(code) {
-  @apply bg-gray-700 p-2 font-mono text-white;
+  @apply bg-slate-700 p-2 font-mono text-white;
 }
 
 :not(pre) > code {
-  @apply bg-gray-200 p-1 font-mono;
+  @apply bg-slate-200 p-1 font-mono;
 }
 
 input {
-  @apply rounded border-1 border-gray-300 bg-gray-50 px-2 py-1;
+  @apply min-h-10 min-w-0 border-b-1 border-black/25 p-2;
+}
+
+textarea {
+  @apply min-h-10 rounded-lg border-1 border-black/25 p-2;
 }
 
 hr {
-  @apply my-4 h-[2px] border-none bg-gray-200;
+  @apply my-4 h-[2px] border-none bg-slate-200;
 }
 
 .lucide {
@@ -96,19 +96,19 @@ hr {
 }
 
 .v-popper--theme-tooltip .v-popper__inner {
-  @apply rounded! border-1! border-none! bg-gray-700! px-4! py-2! text-white! shadow-none!;
+  @apply rounded-lg! border-none! bg-slate-700! px-4! py-2! text-white! shadow-none!;
 }
 
 .v-popper--theme-tooltip .v-popper__arrow-outer {
-  @apply border-gray-700!;
+  @apply border-slate-700!;
 }
 
 .v-popper--theme-dropdown .v-popper__inner {
-  @apply rounded! border-1! border-gray-300! bg-white! p-4! text-white! shadow-sm!;
+  @apply rounded-lg! border-none! bg-white! p-2! text-white! shadow-sm!;
 }
 
 .v-popper--theme-dropdown .v-popper__arrow-outer {
-  @apply border-gray-300!;
+  @apply border-none! shadow-sm!;
 }
 
 .v-popper--theme-dropdown .v-popper__arrow-inner {
