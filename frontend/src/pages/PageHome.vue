@@ -6,10 +6,10 @@ import {
   Upload as ArrowUp,
   Code,
   Download,
+  FileImage,
+  ImageUp,
   Lightbulb,
   ListOrdered,
-  Paperclip,
-  Printer,
   Trash,
   Type,
 } from "lucide-vue-next";
@@ -17,6 +17,7 @@ import { micromark } from "micromark";
 import logo from "@/assets/logo.svg";
 import AppBrain from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
+import { toast } from "@/components/AppToasts";
 import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import styles from "@/styles.css?inline";
@@ -30,7 +31,9 @@ import {
   textExtensions,
   type Upload,
 } from "@/util/upload";
-import example from "./example.md?raw";
+import exampleMd from "./example.md?raw";
+import exampleSvg1 from "./example1.svg?raw";
+import exampleSvg2 from "./example2.svg?raw";
 
 const { VITE_TITLE } = import.meta.env;
 
@@ -66,13 +69,21 @@ const uploadInput = (files: Upload[]) => {
   }
 };
 
-/** load example file */
-const tryExample = async () => {
-  input.value = example;
+/** load example */
+const loadExample = async () => {
+  input.value = exampleMd;
   name.value = "Example Manuscript";
   upload.value = await parseFile(
-    new File([example], "example.md", { type: "text/markdown" }),
+    new File([exampleMd], "example.md", { type: "text/markdown" }),
   );
+  figures.value = await Promise.all(
+    [exampleSvg1, exampleSvg2].map((data, index) =>
+      parseFile(
+        new File([data], `example-${index + 1}.svg`, { type: "image/svg+xml" }),
+      ),
+    ),
+  );
+  toast("Loaded example", "success");
 };
 
 /** save output as markdown */
@@ -143,10 +154,13 @@ const showFigures = ref(false);
         :active="showFigures"
         @click="showFigures = !showFigures"
       >
-        <Paperclip />
+        <FileImage />
+        <div v-if="figures.length" class="absolute -top-2 -right-1 text-xs">
+          {{ figures.length }}
+        </div>
       </AppButton>
 
-      <AppButton v-tooltip="'Try example input'" @click="tryExample">
+      <AppButton v-tooltip="'Try example'" @click="loadExample">
         <Lightbulb />
       </AppButton>
 
@@ -190,11 +204,6 @@ const showFigures = ref(false);
       ref="figureElement"
       class="flex w-60 shrink-0 resize-x flex-col items-center rounded-lg bg-slate-100 transition-[margin,translate]"
     >
-      <div class="flex items-center gap-4 p-4">
-        <b>Figures</b>
-        {{ figures.length }}
-      </div>
-
       <div class="flex items-center gap-2 p-4">
         <AppUpload
           tooltip="Upload figures"
@@ -202,7 +211,7 @@ const showFigures = ref(false);
           :drop-zone="figureElement"
           @files="(files) => (figures = figures.concat(files))"
         >
-          <ArrowUp />
+          <ImageUp />
         </AppUpload>
         <template v-if="figures.length">
           <AppButton
@@ -210,7 +219,8 @@ const showFigures = ref(false);
             @click="
               figures.forEach(
                 (figure, index) => (figure.name = `Figure ${index + 1}`),
-              )
+              );
+              toast('Auto-named figures', 'success');
             "
           >
             <ListOrdered />

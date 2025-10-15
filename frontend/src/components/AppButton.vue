@@ -16,9 +16,9 @@ defineExpose({ element });
 <template>
   <button
     ref="element"
-    class="min-h-10 min-w-10! rounded-full text-xl"
+    class="relative min-h-10 min-w-10! rounded-full border-2 text-xl"
     :class="[
-      active ? 'border-2 border-current' : '',
+      active ? 'border-current' : 'border-transparent',
       design === 'primary'
         ? 'bg-primary text-white hover:bg-slate-700'
         : 'text-primary hover:text-slate-700',

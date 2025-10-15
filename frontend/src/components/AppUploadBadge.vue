@@ -8,7 +8,11 @@ defineProps<Props>();
 
 <template>
   <div
-    v-tooltip="[upload.filename.toLowerCase()].filter(Boolean).join('<br>')"
+    v-tooltip="
+      ['Original file:', upload.filename.toLowerCase()]
+        .filter(Boolean)
+        .join('<br>')
+    "
     class="flex items-center rounded-full bg-current/5 p-1 text-xs"
   >
     {{ upload.extension }}
