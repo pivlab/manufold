@@ -1,23 +1,33 @@
 import { ref } from "vue";
-import { CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-vue-next";
+import {
+  CircleAlert,
+  CircleCheck,
+  Info,
+  Loader2,
+  TriangleAlert,
+} from "lucide-vue-next";
 
 /** toast types */
 export const types = {
+  loading: {
+    icon: Loader2,
+    class: "animate-spin text-gray-500",
+  },
   info: {
     icon: Info,
-    color: "text-sky-500",
+    class: "text-sky-500",
   },
   success: {
     icon: CircleCheck,
-    color: "text-green-500",
+    class: "text-green-500",
   },
   warning: {
     icon: CircleAlert,
-    color: "text-amber-500",
+    class: "text-amber-500",
   },
   error: {
     icon: TriangleAlert,
-    color: "text-rose-500",
+    class: "text-rose-500",
   },
 };
 
@@ -32,7 +42,8 @@ export const toast = (message: string, type: Toast["type"] = "info") => {
   const id = Date.now();
   toasts.value.push({ id, message, type });
   const duration = 2000 + message.length * 50;
-  window.setTimeout(() => {
-    toasts.value = toasts.value.filter((toast) => toast.id !== id);
-  }, duration);
+  const removeToast = () =>
+    (toasts.value = toasts.value.filter((toast) => toast.id !== id));
+  window.setTimeout(removeToast, duration);
+  return removeToast;
 };

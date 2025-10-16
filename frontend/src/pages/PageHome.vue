@@ -1,21 +1,29 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 import draggableComponent from "vuedraggable";
-import { useEventListener, useStorage } from "@vueuse/core";
+import { useEventListener, useStorage, useTextSelection } from "@vueuse/core";
 import {
   Upload as ArrowUp,
+  BookX,
   Code,
   Download,
+  Feather,
   FileImage,
+  GitFork,
   ImageUp,
+  LibraryBig,
   Lightbulb,
   ListOrdered,
+  Printer,
+  Sparkles,
   Trash,
   Type,
 } from "lucide-vue-next";
 import { micromark } from "micromark";
+import { getSession, type SessionResponse } from "@/api/adk";
+import { manugen } from "@/api/api";
 import logo from "@/assets/logo.svg";
-import AppBrain from "@/components/AppBrain.vue";
+import AppBrain, { think } from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
 import { toast } from "@/components/AppToasts";
 import AppUpload from "@/components/AppUpload.vue";
@@ -36,6 +44,23 @@ import exampleSvg1 from "./example1.svg?raw";
 import exampleSvg2 from "./example2.svg?raw";
 
 const { VITE_TITLE } = import.meta.env;
+
+/** ai service session */
+const session = ref<SessionResponse>();
+
+/** establish session with backend */
+onMounted(async () => {
+  const stopLoading = toast("Connecting to AI service", "loading");
+  try {
+    session.value = await getSession();
+    toast("Connected to AI service", "success");
+  } catch (error) {
+    console.warn(error);
+    toast("Failed to connect to AI service", "error");
+  } finally {
+    stopLoading();
+  }
+});
 
 /** elements */
 const figureElement = useTemplateRef("figureElement");
@@ -84,6 +109,74 @@ const loadExample = async () => {
     ),
   );
   toast("Loaded example", "success");
+};
+
+/** currently selected text on page */
+const selection = useTextSelection();
+
+/** ai agent actions */
+const actions = computed(() => [
+  {
+    name: "Draft",
+    icon: Feather,
+    tooltip:
+      "Select one or more # Heading 1 sections and content, then click to draft",
+    prefix: "",
+    enabled: !!selection.text.value.match(/^# [^\n]+$\n+^[^/s#\n]+/m),
+  },
+  {
+    name: "Refine",
+    icon: Sparkles,
+    tooltip: "Select text, then click to revise and improve",
+    prefix: "$REFINE_REQUEST$",
+    enabled: !!selection.text.value.trim(),
+  },
+  {
+    name: "Verify",
+    icon: BookX,
+    tooltip: "Select text, then click to find and avoid reasons for retraction",
+    prefix: "$RETRACTION_AVOIDANCE_REQUEST$",
+    enabled: !!selection.text.value.trim(),
+  },
+  {
+    name: "Citations",
+    icon: LibraryBig,
+    tooltip: "Select text, then click to find and add relevant citations",
+    prefix: "$CITATION_REQUEST$",
+    enabled: !!selection.text.value.trim(),
+  },
+  {
+    name: "Repo",
+    icon: GitFork,
+    tooltip:
+      "Select a full GitHub repo URL, then click to draft based on its content",
+    prefix: "$REPO_REQUEST$",
+    enabled: !!selection.text.value
+      .trim()
+      .match(/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/),
+  },
+]);
+
+const runAction = async (prefix: string) => {
+  if (!session.value) {
+    toast("No AI service session", "error");
+    return;
+  }
+
+  const stopThinking = think();
+
+  try {
+    const result = await manugen(
+      `${prefix}${selection.text.value}`,
+      session.value,
+    );
+    return result;
+  } catch (error) {
+    console.warn(error);
+    toast("AI service error", "error");
+  } finally {
+    stopThinking();
+  }
 };
 
 /** save output as markdown */
@@ -139,6 +232,7 @@ const showFigures = ref(false);
   <header
     class="bg-secondary flex flex-wrap items-center justify-between gap-4 p-4"
   >
+    <!-- header left -->
     <div>
       <AppUpload
         tooltip="Upload manuscript content files"
@@ -169,12 +263,16 @@ const showFigures = ref(false);
       <AppUploadBadge v-if="upload" :upload="upload" />
     </div>
 
-    <div class="text-primary gap-4! text-2xl uppercase">
-      <img :src="logo" class="h-10" />
+    <!-- header middle -->
+    <div class="text-primary gap-4! text-xl uppercase">
+      <img :src="logo" class="h-8" />
       <span class="whitespace-nowrap">{{ VITE_TITLE }}</span>
-      <AppBrain class="absolute inset-0 left-[calc(100%+1rem)] h-10" />
+      <div class="-ml-4 h-0 w-0">
+        <AppBrain class="h-12 w-12 translate-x-4 -translate-y-1/2" />
+      </div>
     </div>
 
+    <!-- header right -->
     <div>
       <VDropdown>
         <AppButton v-tooltip="'Download output'" design="primary">
@@ -199,6 +297,7 @@ const showFigures = ref(false);
   </header>
 
   <main class="flex h-0 grow gap-4 p-4">
+    <!-- figure panel -->
     <aside
       v-show="showFigures"
       ref="figureElement"
@@ -263,13 +362,38 @@ const showFigures = ref(false);
       </draggableComponent>
     </aside>
 
-    <textarea
-      ref="inputElement"
-      v-model="input"
-      placeholder="Start writing your manuscript Markdown here"
-      class="w-[50%] shrink-0 resize-x p-4!"
-    />
+    <!-- input panel -->
+    <div class="flex w-[50%] shrink-0 resize-x flex-col items-center gap-2">
+      <!-- ai actions -->
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <AppButton
+          v-for="(action, index) in actions"
+          :key="index"
+          v-tooltip="action.tooltip"
+          :class="
+            !action.enabled ? 'cursor-not-allowed! opacity-50 grayscale' : ''
+          "
+          @click="
+            action.enabled
+              ? runAction(action.prefix)
+              : toast('Follow button help text to use this action', 'info')
+          "
+        >
+          <component :is="action.icon" />
+          <span class="whitespace-nowrap">{{ action.name }}</span>
+        </AppButton>
+      </div>
 
+      <!-- text input -->
+      <textarea
+        ref="inputElement"
+        v-model="input"
+        placeholder="Start writing your manuscript Markdown here"
+        class="h-full w-full resize-none p-4!"
+      />
+    </div>
+
+    <!-- output panel -->
     <div
       ref="outputElement"
       class="flex flex-grow flex-col gap-4 rounded-lg bg-slate-100 p-4"

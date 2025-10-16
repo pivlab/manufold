@@ -18,6 +18,7 @@ export default defineConfigWithVueTs(
     files: ["**/*.{ts,mts,tsx,vue}"],
     rules: {
       "vue/no-v-html": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { caughtErrors: "none" }],
     },
   },
 );

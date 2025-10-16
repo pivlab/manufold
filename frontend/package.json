@@ -23,6 +23,7 @@
     "micromark": "^4.0.2",
     "pdfjs-dist": "^5.4.149",
     "poisson-disk-sampling": "^2.3.1",
+    "sse.js": "^2.7.2",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1",
     "vuedraggable": "^4.1.0"
@@ -38,6 +39,7 @@
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
+    "adk-typescript": "^1.0.3",
     "eslint": "^9.33.0",
     "eslint-plugin-vue": "^10.4.0",
     "prettier": "3.6.2",

@@ -16,7 +16,7 @@ defineExpose({ element });
 <template>
   <button
     ref="element"
-    class="relative min-h-10 min-w-10! rounded-full border-2 text-xl"
+    class="relative min-h-8 min-w-8! rounded-full border-2"
     :class="[
       active ? 'border-current' : 'border-transparent',
       design === 'primary'
@@ -27,3 +27,11 @@ defineExpose({ element });
     <slot />
   </button>
 </template>
+
+<style scoped>
+@reference "tailwindcss";
+
+button:has(span) {
+  @apply px-3;
+}
+</style>

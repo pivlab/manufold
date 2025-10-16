@@ -20,7 +20,7 @@ import { toasts, types } from "./AppToasts";
       <component
         :is="types[toast.type].icon"
         class="h-5 w-5"
-        :class="types[toast.type].color"
+        :class="types[toast.type].class"
       />
       <span class="flex-1">{{ toast.message }}</span>
       <button
