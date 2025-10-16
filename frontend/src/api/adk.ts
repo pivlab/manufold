@@ -29,6 +29,7 @@ export const getSession = async () => {
     /** get existing session */
     return await request<SessionResponse>(url);
   } catch (error) {
+    /** retries with backoff */
     const waits = [100, 500, 1000, 2000, 3000, 4000, 5000];
     for (const wait of waits) {
       try {

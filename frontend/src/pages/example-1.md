@@ -38,7 +38,3 @@
 # Methods
 
 - add a more in-detail description of the CCC algorithm implemented here: https://raw.githubusercontent.com/greenelab/ccc/refs/heads/main/libs/ccc/coef/impl.py
-
-OR
-
-https://github.com/pivlab/manugen-ai

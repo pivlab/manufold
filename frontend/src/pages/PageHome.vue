@@ -39,9 +39,10 @@ import {
   textExtensions,
   type Upload,
 } from "@/util/upload";
-import exampleMd from "./example.md?raw";
-import exampleSvg1 from "./example1.svg?raw";
-import exampleSvg2 from "./example2.svg?raw";
+import example1Fig1 from "./example-1-figure-1.svg?raw";
+import example1Fig2 from "./example-1-figure-2.svg?raw";
+import example1 from "./example-1.md?raw";
+import example2 from "./example-2.md?raw";
 
 const { VITE_TITLE } = import.meta.env;
 
@@ -94,18 +95,35 @@ const uploadInput = (files: Upload[]) => {
   }
 };
 
+const examples = {
+  "Draft from skeleton w/ figs": {
+    input: example1,
+    figures: [
+      { data: example1Fig1, filename: "fig-1.svg", type: "image/svg+xml" },
+      { data: example1Fig2, filename: "fig-2.svg", type: "image/svg+xml" },
+    ],
+    name: "Example Manuscript",
+  },
+  "Draft from GitHub repo": {
+    input: example2,
+    figures: [],
+    name: "Example Manuscript",
+  },
+};
+
 /** load example */
-const loadExample = async () => {
-  input.value = exampleMd;
-  name.value = "Example Manuscript";
+const loadExample = async (key: keyof typeof examples) => {
+  const example = examples[key];
+  input.value = example.input;
+  name.value = example.name;
   upload.value = await parseFile(
-    new File([exampleMd], "example.md", { type: "text/markdown" }),
+    new File([example.input], "example.md", {
+      type: "text/markdown",
+    }),
   );
   figures.value = await Promise.all(
-    [exampleSvg1, exampleSvg2].map((data, index) =>
-      parseFile(
-        new File([data], `example-${index + 1}.svg`, { type: "image/svg+xml" }),
-      ),
+    example.figures.map(({ data, filename, type }) =>
+      parseFile(new File([data], filename, { type })),
     ),
   );
   toast("Loaded example", "success");
@@ -254,9 +272,25 @@ const showFigures = ref(false);
         </div>
       </AppButton>
 
-      <AppButton v-tooltip="'Try example'" @click="loadExample">
-        <Lightbulb />
-      </AppButton>
+      <VDropdown>
+        <AppButton v-tooltip="'Examples'">
+          <Lightbulb />
+        </AppButton>
+
+        <template #popper>
+          <div class="flex flex-col items-start gap-2">
+            <AppButton
+              v-for="(_, key) in examples"
+              :key="key"
+              @click="loadExample(key)"
+            >
+              <span>
+                {{ key }}
+              </span>
+            </AppButton>
+          </div>
+        </template>
+      </VDropdown>
 
       <input v-model="name" placeholder="New Manuscript" />
 
@@ -380,7 +414,7 @@ const showFigures = ref(false);
           "
         >
           <component :is="action.icon" />
-          <span class="whitespace-nowrap">{{ action.name }}</span>
+          <span>{{ action.name }}</span>
         </AppButton>
       </div>
 
