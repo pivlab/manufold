@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, useTemplateRef } from "vue";
 import draggableComponent from "vuedraggable";
-import { useEventListener, useStorage, useTextSelection } from "@vueuse/core";
+import { useEventListener, useStorage } from "@vueuse/core";
 import {
   Upload as ArrowUp,
   BookX,
@@ -20,8 +20,8 @@ import {
   Type,
 } from "lucide-vue-next";
 import { micromark } from "micromark";
-import { getSession, type SessionResponse } from "@/api/adk";
-import { manugen } from "@/api/api";
+import { aiScienceWriter, getSession } from "@/api/api";
+import type { Session } from "@/api/api";
 import logo from "@/assets/logo.svg";
 import AppBrain, { think } from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
@@ -47,7 +47,7 @@ import example2 from "./example-2.md?raw";
 const { VITE_TITLE } = import.meta.env;
 
 /** ai service session */
-const session = ref<SessionResponse>();
+const session = ref<Session>();
 
 /** establish session with backend */
 onMounted(async () => {
@@ -68,8 +68,21 @@ const figureElement = useTemplateRef("figureElement");
 const inputElement = useTemplateRef("inputElement");
 const outputElement = useTemplateRef("outputElement");
 
+/** keep track of selected text in input */
+const selection = ref("");
+
+/** update input selected text */
+const updateSelection = () => {
+  if (!inputElement.value) return;
+  const { selectionStart, selectionEnd } = inputElement.value;
+  selection.value = inputElement.value.value.substring(
+    selectionStart,
+    selectionEnd,
+  );
+};
+
 /** for dev */
-window.localStorage.clear();
+// window.localStorage.clear();
 
 /** current input */
 const input = useStorage("input", "");
@@ -129,9 +142,6 @@ const loadExample = async (key: keyof typeof examples) => {
   toast("Loaded example", "success");
 };
 
-/** currently selected text on page */
-const selection = useTextSelection();
-
 /** ai agent actions */
 const actions = computed(() => [
   {
@@ -140,28 +150,28 @@ const actions = computed(() => [
     tooltip:
       "Select one or more # Heading 1 sections and content, then click to draft",
     prefix: "",
-    enabled: !!selection.text.value.match(/^# [^\n]+$\n+^[^/s#\n]+/m),
+    enabled: !!selection.value.match(/^# [^\n]+$\n+^[^/s#\n]+/m),
   },
   {
     name: "Refine",
     icon: Sparkles,
     tooltip: "Select text, then click to revise and improve",
     prefix: "$REFINE_REQUEST$",
-    enabled: !!selection.text.value.trim(),
+    enabled: !!selection.value.trim(),
   },
   {
     name: "Verify",
     icon: BookX,
     tooltip: "Select text, then click to find and avoid reasons for retraction",
     prefix: "$RETRACTION_AVOIDANCE_REQUEST$",
-    enabled: !!selection.text.value.trim(),
+    enabled: !!selection.value.trim(),
   },
   {
     name: "Citations",
     icon: LibraryBig,
     tooltip: "Select text, then click to find and add relevant citations",
     prefix: "$CITATION_REQUEST$",
-    enabled: !!selection.text.value.trim(),
+    enabled: !!selection.value.trim(),
   },
   {
     name: "Repo",
@@ -169,12 +179,13 @@ const actions = computed(() => [
     tooltip:
       "Select a full GitHub repo URL, then click to draft based on its content",
     prefix: "$REPO_REQUEST$",
-    enabled: !!selection.text.value
+    enabled: !!selection.value
       .trim()
       .match(/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/),
   },
 ]);
 
+/** run ai action with ai service */
 const runAction = async (prefix: string) => {
   if (!session.value) {
     toast("No AI service session", "error");
@@ -184,11 +195,13 @@ const runAction = async (prefix: string) => {
   const stopThinking = think();
 
   try {
-    const result = await manugen(
-      `${prefix}${selection.text.value}`,
+    const result = await aiScienceWriter(
+      `${prefix}${selection.value}`,
       session.value,
+      (message) => toast(message, "info"),
     );
-    return result;
+
+    console.log(result);
   } catch (error) {
     console.warn(error);
     toast("AI service error", "error");
@@ -267,7 +280,11 @@ const showFigures = ref(false);
         @click="showFigures = !showFigures"
       >
         <FileImage />
-        <div v-if="figures.length" class="absolute -top-2 -right-1 text-xs">
+        <div
+          v-if="figures.length"
+          class="absolute text-xs"
+          :class="showFigures ? '-top-2 -right-2' : '-top-1 -right-1'"
+        >
           {{ figures.length }}
         </div>
       </AppButton>
@@ -424,6 +441,8 @@ const showFigures = ref(false);
         v-model="input"
         placeholder="Start writing your manuscript Markdown here"
         class="h-full w-full resize-none p-4!"
+        @select="updateSelection"
+        @selectionchange="updateSelection"
       />
     </div>
 

@@ -22,7 +22,7 @@ import { toasts, types } from "./AppToasts";
         class="h-5 w-5"
         :class="types[toast.type].class"
       />
-      <span class="flex-1">{{ toast.message }}</span>
+      <span class="flex-1" v-html="toast.message" />
       <button
         class="h-5 w-5 text-slate-500 hover:text-slate-900"
         aria-label="Close"

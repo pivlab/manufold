@@ -3,7 +3,8 @@ import { computed, ref, useTemplateRef, watchEffect } from "vue";
 import { useEventListener } from "@vueuse/core";
 import { LoaderCircle } from "lucide-vue-next";
 import AppButton from "@/components/AppButton.vue";
-import { parseFile, type Upload } from "@/util/upload";
+import { parseFile } from "@/util/upload";
+import type { Upload } from "@/util/upload";
 
 type Props = {
   /** file types to accept */
