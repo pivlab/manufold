@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import draggableComponent from "vuedraggable";
 import { useEventListener, useStorage } from "@vueuse/core";
+import { isEqual } from "lodash";
 import {
   Upload as ArrowUp,
   BookX,
@@ -30,7 +31,7 @@ import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import styles from "@/styles.css?inline";
 import { downloadHtml, downloadMd } from "@/util/download";
-import { sleep } from "@/util/misc";
+import { hash, selectElementText, sleep } from "@/util/misc";
 import {
   imageAccepts,
   imageExtensions,
@@ -195,7 +196,7 @@ const actions = computed(() => [
 const running = ref(false);
 
 /** run ai action with ai service */
-const runAction = async (prefix: string) => {
+const runAction = async (prefix: string, name: string) => {
   /** check if connected to ai service */
   if (!session.value) {
     toast("No AI service session", "error");
@@ -208,10 +209,8 @@ const runAction = async (prefix: string) => {
     return;
   }
 
-  /** start animation */
   const stopThinking = think();
-
-  /** set running state */
+  const { update } = toast(`Running "${name}"`, "loading");
   running.value = true;
 
   try {
@@ -233,13 +232,15 @@ const runAction = async (prefix: string) => {
 
     /** paste result into selection, w/ browser undo history */
     document.execCommand("insertText", false, result);
+
+    update(`Completed "${name}"`, "success");
   } catch (error) {
     console.warn(error);
-    toast("AI service error", "error");
-  } finally {
-    stopThinking();
-    running.value = false;
+    update("AI service error", "error");
   }
+
+  stopThinking();
+  running.value = false;
 };
 
 /** save output as markdown */
@@ -284,11 +285,15 @@ useEventListener("keydown", (event) => {
   }
 });
 
+type Figure = Upload & Partial<Awaited<ReturnType<typeof uploadArtifact>>>;
+
 /** attached figures */
-const figures = ref<Upload[]>([]);
+const figures = ref<Figure[]>([]);
 
 /** show figures */
 const showFigures = ref(false);
+
+const figureCache = new Map<number, Figure>();
 
 watch(
   figures,
@@ -299,24 +304,43 @@ watch(
     }
 
     const stopThinking = think();
-
-    const { update } = toast("Updating figures", "loading", "figures");
+    const { update, close } = toast("Updating figures", "loading", "figures");
 
     try {
-      /** send figures to ai service */
-      await Promise.all(
-        figures.value.map((figure) => {
-          if (!session.value) return true;
-          return uploadArtifact(
+      const newFigures = await Promise.all(
+        figures.value.map(async (figure) => {
+          if (!session.value) throw Error("No session");
+
+          /** id for figure from unique name/contents */
+          const id = hash([figure.name, figure.data].join("|"));
+
+          /** skip if already uploaded */
+          const cached = figureCache.get(id);
+          if (cached) return cached;
+
+          /** send figure to ai service */
+          const result = await uploadArtifact(
             session.value,
             figure.name,
             figure.data,
             figure.type,
           );
+
+          /** combine result with existing figure info */
+          const newFigure = { ...figure, ...result };
+
+          /** update cache */
+          figureCache.set(id, newFigure);
+
+          return newFigure;
         }),
       );
 
-      update("Updated figures", "success");
+      /** avoid infinite updates */
+      if (!isEqual(figures.value, newFigures)) {
+        figures.value = newFigures;
+        update("Updated figures", "success");
+      } else close();
     } catch (error) {
       console.warn(error);
       update("Error updating figures", "error");
@@ -369,6 +393,7 @@ watch(
             <AppButton
               v-for="(_, key) in examples"
               :key="key"
+              v-close-popper
               @click="loadExample(key)"
             >
               <span>
@@ -402,13 +427,17 @@ watch(
 
         <template #popper>
           <div class="flex flex-wrap items-center gap-2">
-            <AppButton v-tooltip="'Markdown'" @click="saveMd">
+            <AppButton v-tooltip="'Markdown'" v-close-popper @click="saveMd">
               <Type />
             </AppButton>
-            <AppButton v-tooltip="'HTML'" @click="saveHtml">
+            <AppButton v-tooltip="'HTML'" v-close-popper @click="saveHtml">
               <Code />
             </AppButton>
-            <AppButton v-tooltip="'Print to PDF'" @click="savePdf">
+            <AppButton
+              v-tooltip="'Print to PDF'"
+              v-close-popper
+              @click="savePdf"
+            >
               <Printer />
             </AppButton>
           </div>
@@ -458,7 +487,7 @@ watch(
         class="flex w-full flex-col items-center gap-4 overflow-y-auto p-4"
       >
         <template
-          #item="{ element, index }: { element: Upload; index: number }"
+          #item="{ element, index }: { element: Figure; index: number }"
         >
           <div class="flex w-full flex-col gap-2">
             <div class="max-h-60 max-w-full">
@@ -477,6 +506,19 @@ watch(
               >
                 <Trash />
               </AppButton>
+            </div>
+            <div
+              v-if="element.title || element.description"
+              class="truncate-lines"
+              tabindex="0"
+              @click="selectElementText($event.currentTarget as HTMLElement)"
+            >
+              <b v-if="element.title">
+                {{ element.title }}
+              </b>
+              <div v-if="element.description" class="text-sm text-slate-500">
+                {{ element.description }}
+              </div>
             </div>
           </div>
         </template>
@@ -497,7 +539,7 @@ watch(
           "
           @click="
             action.enabled
-              ? runAction(action.prefix)
+              ? runAction(action.prefix, action.name)
               : toast('Follow button help text to use this action', 'info')
           "
         >

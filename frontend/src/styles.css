@@ -91,6 +91,17 @@ hr {
   @apply pointer-events-none opacity-50 grayscale;
 }
 
+.truncate-lines:not(:focus) {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  @apply max-w-full cursor-zoom-in overflow-hidden;
+}
+
+.truncate-lines:focus {
+  @apply rounded border-1 border-slate-300 p-2;
+}
+
 .lucide {
   width: unset;
   height: 1em;

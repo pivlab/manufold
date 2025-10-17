@@ -95,7 +95,7 @@ export const aiScienceWriter = async (
     else if (author) onMessage?.(startCase(author));
   };
 
-  /** request from ai service */
+  /** make request */
   const response = await sseRequest(runSseApi, options, _onMessage);
 
   console.debug(response);
@@ -128,7 +128,24 @@ export const uploadArtifact = async (
     body: JSON.stringify(payload),
   };
 
-  return request<Response>(runApi, options);
+  /** make request */
+  const response = await request<Event[]>(runApi, options);
+
+  console.debug(response);
+
+  const text = extractText(response);
+
+  try {
+    /** expect response to be stringified json describing artifact */
+    const { title, description, figure_number } = JSON.parse(text) as {
+      title: string;
+      description: string;
+      figure_number: number;
+    };
+    return { title, description, figure_number };
+  } catch (error) {
+    throw Error("Couldn't parse artifact response");
+  }
 };
 
 export type { Session };

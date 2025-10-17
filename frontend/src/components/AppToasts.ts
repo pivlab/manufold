@@ -11,7 +11,7 @@ import {
 export const types = {
   loading: {
     icon: Loader2,
-    class: "animate-spin text-gray-500",
+    class: "animate-spin text-slate-500",
     durationMult: 100,
   },
   info: {
