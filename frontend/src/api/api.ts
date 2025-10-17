@@ -74,6 +74,7 @@ export const aiScienceWriter = async (
 ) => {
   /** payload to provide backend */
   const payload = {
+    appName: session.appName,
     userId: session.userId,
     sessionId: session.id,
     newMessage: { role: "user", parts: [{ text: input }] },
