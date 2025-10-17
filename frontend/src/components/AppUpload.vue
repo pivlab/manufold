@@ -13,9 +13,15 @@ type Props = {
   dropZone?: HTMLElement | null;
   /** tooltip directive */
   tooltip?: unknown;
+  /** disabled */
+  disabled?: boolean;
 };
 
-const { dropZone = document.body, tooltip = null } = defineProps<Props>();
+const {
+  dropZone = document.body,
+  tooltip = null,
+  disabled = false,
+} = defineProps<Props>();
 
 type Emits = {
   dragging: [boolean];
@@ -96,7 +102,7 @@ useEventListener(_dropzone, "drop", (event) => {
     ref="buttonElement"
     v-tooltip="tooltip"
     design="primary"
-    :disabled="uploading"
+    :disabled="disabled || uploading"
     @click="onClick"
   >
     <LoaderCircle v-if="uploading" class="animate-spin" />

@@ -17,6 +17,7 @@ export default defineConfigWithVueTs(
     name: "app/files-to-lint",
     files: ["**/*.{ts,mts,tsx,vue}"],
     rules: {
+      "prefer-const": ["error", { destructuring: "all" }],
       "vue/no-v-html": "off",
       "@typescript-eslint/no-unused-vars": ["error", { caughtErrors: "none" }],
     },

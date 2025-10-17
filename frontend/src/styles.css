@@ -87,6 +87,10 @@ hr {
   @apply my-4 h-[2px] border-none bg-slate-200;
 }
 
+[disabled] {
+  @apply pointer-events-none opacity-50 grayscale;
+}
+
 .lucide {
   width: unset;
   height: 1em;

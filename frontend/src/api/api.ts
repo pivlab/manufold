@@ -1,6 +1,7 @@
 /** https://github.com/google/adk-docs/issues/63 */
 import type { Event } from "adk-typescript/events";
 import type { Session, SessionOptions } from "adk-typescript/sessions";
+import { startCase } from "lodash";
 import { api, request, sseRequest } from "@/api";
 import { sleep } from "@/util/misc";
 
@@ -61,8 +62,9 @@ export const extractText = (response?: Event[]) =>
 export const aiScienceWriter = async (
   input: string,
   session: Session,
-  message?: (message: string) => void,
+  onMessage?: (message: string) => void,
 ) => {
+  /** payload to provide to agent */
   const runPayload = {
     appName: session.appName,
     userId: session.userId,
@@ -77,16 +79,17 @@ export const aiScienceWriter = async (
   };
 
   /** log messages from llm */
-  const onMessage = (event: Event) => {
-    let msg = "";
-    if (event.actions?.transferToAgent)
-      msg = `<b>${event.author}</b><br />${event.actions.transferToAgent}`;
-    else if (event.content?.parts[0]?.text)
-      msg = `<b>${event.author}</b><br />produced text`;
-    if (msg) message?.(msg);
+  const _onMessage = (event: Event) => {
+    console.debug(event);
+    const { author, actions: { transferToAgent } = {} } = event;
+    if (transferToAgent) onMessage?.(startCase(transferToAgent));
+    else if (author) onMessage?.(startCase(author));
   };
 
-  const response = await sseRequest(runUrl, runOptions, onMessage);
+  /** request from ai service */
+  const response = await sseRequest(runUrl, runOptions, _onMessage);
+
+  console.debug(response);
 
   return extractText(response);
 };

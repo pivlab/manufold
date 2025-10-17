@@ -148,9 +148,15 @@ const actions = computed(() => [
     name: "Draft",
     icon: Feather,
     tooltip:
-      "Select one or more # Heading 1 sections and content, then click to draft",
+      "Select one # Heading 1 section and its content, then click to draft",
     prefix: "",
-    enabled: !!selection.value.match(/^# [^\n]+$\n+^[^/s#\n]+/m),
+    enabled:
+      /** starts with h1 */
+      selection.value.trim().startsWith("# ") &&
+      /** only has 1 h1 */
+      [...selection.value.matchAll(/^# /gm)].length === 1 &&
+      /** has non-h1 line */
+      [...selection.value.matchAll(/^\s*[^#\s]/gm)].length,
   },
   {
     name: "Refine",
@@ -185,28 +191,54 @@ const actions = computed(() => [
   },
 ]);
 
+/** is action currently running */
+const running = ref(false);
+
 /** run ai action with ai service */
 const runAction = async (prefix: string) => {
+  /** check if connected to ai service */
   if (!session.value) {
     toast("No AI service session", "error");
     return;
   }
 
+  /** prevent multiple actions from running simultaneously */
+  if (running.value) {
+    toast("Action currently running", "info");
+    return;
+  }
+
+  /** start animation */
   const stopThinking = think();
 
+  /** set running state */
+  running.value = true;
+
   try {
+    /** run ai action */
     const result = await aiScienceWriter(
       `${prefix}${selection.value}`,
       session.value,
       (message) => toast(message, "info"),
     );
 
-    console.log(result);
+    if (!result) throw new Error("No result from AI service");
+
+    /** un-disable input element */
+    running.value = false;
+    await sleep();
+
+    /** re-focus input */
+    inputElement.value?.focus();
+
+    /** paste result into selection, w/ browser undo history */
+    document.execCommand("insertText", false, result);
   } catch (error) {
     console.warn(error);
     toast("AI service error", "error");
   } finally {
     stopThinking();
+    running.value = false;
   }
 };
 
@@ -269,6 +301,7 @@ const showFigures = ref(false);
         tooltip="Upload manuscript content files"
         :accept="textAccepts.concat(textExtensions)"
         :drop-zone="inputElement"
+        :disabled="running"
         @files="uploadInput"
       >
         <ArrowUp />
@@ -290,7 +323,7 @@ const showFigures = ref(false);
       </AppButton>
 
       <VDropdown>
-        <AppButton v-tooltip="'Examples'">
+        <AppButton v-tooltip="'Examples'" :disabled="running">
           <Lightbulb />
         </AppButton>
 
@@ -421,6 +454,7 @@ const showFigures = ref(false);
           v-for="(action, index) in actions"
           :key="index"
           v-tooltip="action.tooltip"
+          :disabled="running"
           :class="
             !action.enabled ? 'cursor-not-allowed! opacity-50 grayscale' : ''
           "
@@ -441,6 +475,9 @@ const showFigures = ref(false);
         v-model="input"
         placeholder="Start writing your manuscript Markdown here"
         class="h-full w-full resize-none p-4!"
+        :class="running ? 'user-select-none pointer-events-none' : ''"
+        :disabled="running"
+        :draggable="false"
         @select="updateSelection"
         @selectionchange="updateSelection"
       />

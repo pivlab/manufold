@@ -54,11 +54,8 @@ export const sseRequest = async <Event>(
   /** combined events */
   const events: Event[] = [];
 
-  console.log("sup");
-
   /** on message receive */
   source.addEventListener("message", (event: { data: string }) => {
-    console.log(event);
     /** parse data */
     const eventData = JSON.parse(event.data) as Event;
     /** record log */
