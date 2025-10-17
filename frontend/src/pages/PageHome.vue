@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef } from "vue";
+import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
 import draggableComponent from "vuedraggable";
 import { useEventListener, useStorage } from "@vueuse/core";
 import {
@@ -20,7 +20,7 @@ import {
   Type,
 } from "lucide-vue-next";
 import { micromark } from "micromark";
-import { aiScienceWriter, getSession } from "@/api/api";
+import { aiScienceWriter, getSession, uploadArtifact } from "@/api/api";
 import type { Session } from "@/api/api";
 import logo from "@/assets/logo.svg";
 import AppBrain, { think } from "@/components/AppBrain.vue";
@@ -39,8 +39,9 @@ import {
   textExtensions,
   type Upload,
 } from "@/util/upload";
-import example1Fig1 from "./example-1-figure-1.svg?raw";
-import example1Fig2 from "./example-1-figure-2.svg?raw";
+import example1Fig1 from "./example-1-figure-1.png?arraybuffer";
+import example1Fig2 from "./example-1-figure-2.png?arraybuffer";
+import example1Fig3 from "./example-1-figure-3.png?arraybuffer";
 import example1 from "./example-1.md?raw";
 import example2 from "./example-2.md?raw";
 
@@ -51,15 +52,13 @@ const session = ref<Session>();
 
 /** establish session with backend */
 onMounted(async () => {
-  const stopLoading = toast("Connecting to AI service", "loading");
+  const { update } = toast("Connecting to AI service", "loading");
   try {
     session.value = await getSession();
-    toast("Connected to AI service", "success");
+    update("Connected to AI service", "success");
   } catch (error) {
     console.warn(error);
-    toast("Failed to connect to AI service", "error");
-  } finally {
-    stopLoading();
+    update("Failed to connect to AI service", "error");
   }
 });
 
@@ -110,28 +109,29 @@ const uploadInput = (files: Upload[]) => {
 
 const examples = {
   "Draft from skeleton w/ figs": {
-    input: example1,
-    figures: [
-      { data: example1Fig1, filename: "fig-1.svg", type: "image/svg+xml" },
-      { data: example1Fig2, filename: "fig-2.svg", type: "image/svg+xml" },
-    ],
     name: "Example Manuscript",
+    input: { data: example1, filename: "example.md", type: "text/markdown" },
+    figures: [
+      { data: example1Fig1, filename: "fig-1.png", type: "image/png" },
+      { data: example1Fig2, filename: "fig-2.png", type: "image/png" },
+      { data: example1Fig3, filename: "fig-3.png", type: "image/png" },
+    ],
   },
   "Draft from GitHub repo": {
-    input: example2,
-    figures: [],
     name: "Example Manuscript",
+    input: { data: example2, filename: "example.md", type: "text/markdown" },
+    figures: [],
   },
 };
 
 /** load example */
 const loadExample = async (key: keyof typeof examples) => {
   const example = examples[key];
-  input.value = example.input;
   name.value = example.name;
+  input.value = example.input.data;
   upload.value = await parseFile(
-    new File([example.input], "example.md", {
-      type: "text/markdown",
+    new File([example.input.data], example.input.filename, {
+      type: example.input.type,
     }),
   );
   figures.value = await Promise.all(
@@ -284,11 +284,48 @@ useEventListener("keydown", (event) => {
   }
 });
 
-/** attached files */
+/** attached figures */
 const figures = ref<Upload[]>([]);
 
 /** show figures */
 const showFigures = ref(false);
+
+watch(
+  figures,
+  async () => {
+    if (!session.value) {
+      toast("No AI service session", "error");
+      return;
+    }
+
+    const stopThinking = think();
+
+    const { update } = toast("Updating figures", "loading", "figures");
+
+    try {
+      /** send figures to ai service */
+      await Promise.all(
+        figures.value.map((figure) => {
+          if (!session.value) return true;
+          return uploadArtifact(
+            session.value,
+            figure.name,
+            figure.data,
+            figure.type,
+          );
+        }),
+      );
+
+      update("Updated figures", "success");
+    } catch (error) {
+      console.warn(error);
+      update("Error updating figures", "error");
+    }
+
+    stopThinking();
+  },
+  { deep: true },
+);
 </script>
 
 <template>

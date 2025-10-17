@@ -90,7 +90,7 @@ export const parseFile = async (file: File) => {
     /** image */
     data = window.btoa(
       Array.from(new Uint8Array(await file.arrayBuffer()))
-        .map((b) => String.fromCharCode(b))
+        .map((byte) => String.fromCharCode(byte))
         .join(""),
     );
     icon = Image;

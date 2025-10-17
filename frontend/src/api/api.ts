@@ -13,14 +13,9 @@ const session = `session-${Math.floor(Date.now() / 1000)}`;
 /** session url */
 const sessionApi = `${api}/adk_api/apps/${app}/users/${user}/sessions/${session}`;
 /** run url */
-const runUrl = `${api}/adk_api/run_sse`;
-
-/** create session options */
-const options = {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ state: {} } satisfies SessionOptions),
-};
+const runApi = `${api}/adk_api/run`;
+/** run sse url */
+const runSseApi = `${api}/adk_api/run_sse`;
 
 /** get or create session */
 export const getSession = async () => {
@@ -28,6 +23,16 @@ export const getSession = async () => {
     /** get existing session */
     return await request<Session>(sessionApi);
   } catch (error) {
+    /** payload to provide backend */
+    const payload: SessionOptions = { state: {} };
+
+    /** request options */
+    const options = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    };
+
     /** retries with backoff */
     const waits = [100, 500, 1000, 2000, 3000, 4000, 5000];
     for (const wait of waits) {
@@ -58,24 +63,27 @@ export const extractText = (response?: Event[]) =>
     /** get last paragraph */
     .at(-1) ?? "";
 
+// type Runner = InstanceType<(typeof import("adk-typescript").runners)["Runner"]>;
+// type RunPayload = Parameters<Runner["runAsync"]>[0];
+
 /** run ai manuscript action */
 export const aiScienceWriter = async (
   input: string,
   session: Session,
   onMessage?: (message: string) => void,
 ) => {
-  /** payload to provide to agent */
-  const runPayload = {
-    appName: session.appName,
+  /** payload to provide backend */
+  const payload = {
     userId: session.userId,
     sessionId: session.id,
     newMessage: { role: "user", parts: [{ text: input }] },
   };
 
-  const runOptions = {
+  /** request options */
+  const options = {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    payload: JSON.stringify(runPayload),
+    payload: JSON.stringify(payload),
   };
 
   /** log messages from llm */
@@ -87,11 +95,39 @@ export const aiScienceWriter = async (
   };
 
   /** request from ai service */
-  const response = await sseRequest(runUrl, runOptions, _onMessage);
+  const response = await sseRequest(runSseApi, options, _onMessage);
 
   console.debug(response);
 
   return extractText(response);
+};
+
+/** send e.g. image backend */
+export const uploadArtifact = async (
+  session: Session,
+  name: string,
+  data: string,
+  type: string,
+) => {
+  /** payload to provide backend */
+  const payload = {
+    appName: session.appName,
+    userId: session.userId,
+    sessionId: session.id,
+    newMessage: {
+      role: "user",
+      parts: [{ inlineData: { displayName: name, data, mimeType: type } }],
+    },
+  };
+
+  /** request options */
+  const options = {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  };
+
+  return request<Response>(runApi, options);
 };
 
 export type { Session };

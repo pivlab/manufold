@@ -13,20 +13,20 @@ import { toasts, types } from "./AppToasts";
   >
     <div
       v-for="toast in toasts"
-      :key="toast.id"
+      :key="toast.value.id"
       class="flex items-center gap-2 rounded-lg border-1 border-black/10 bg-white p-4 shadow-sm"
       role="alert"
     >
       <component
-        :is="types[toast.type].icon"
+        :is="types[toast.value.type].icon"
         class="h-5 w-5"
-        :class="types[toast.type].class"
+        :class="types[toast.value.type].class"
       />
-      <span class="flex-1" v-html="toast.message" />
+      <span class="flex-1" v-html="toast.value.message" />
       <button
         class="h-5 w-5 text-slate-500 hover:text-slate-900"
         aria-label="Close"
-        @click="toasts = toasts.filter((t) => t.id !== toast.id)"
+        @click="toast.value.close"
       >
         <X />
       </button>
