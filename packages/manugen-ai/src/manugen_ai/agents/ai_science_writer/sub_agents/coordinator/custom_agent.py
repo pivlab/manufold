@@ -75,9 +75,16 @@ class CoordinatorAgent(ManugenAIBaseAgent):
             # simulate an event that there was a transfer of agent
             yield self.get_transfer_to_agent_event(ctx, agent)
 
-            # remove "display_name" since adk does not support it
-            if last_user_input.inline_data is not None:
-                last_user_input.inline_data.display_name = None
+            # --- if the user gave a filename, inject it as a text part ---
+            if last_user_input.inline_data and last_user_input.inline_data.display_name:
+                from google.genai.types import Part
+                file_name = last_user_input.inline_data.display_name
+                # just inject the “Filename:” hint so the LLM sees it
+                ctx.user_content.parts.insert(
+                    0,
+                    Part(text=f"Filename: {file_name}")
+                )
+             # ------------------------------------------------------------------
 
             # call agent
             async for event in agent.run_async(ctx):

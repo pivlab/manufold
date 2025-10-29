@@ -1,4 +1,4 @@
-"""Prompt for the abstract_agent"""
+"""Prompt for the figure agent"""
 
 import json
 
@@ -13,6 +13,9 @@ Otherwise, continue.
 * Analyze the figure in the context of a scientific paper.
 * Generate an in-depth description of the figure. If you need to add formatting to
 the description, use Markdown.
+*  If the figure’s name (title or file name) contains “Supp.“, “supp.“, “Supplemental“,
+“supplemental“, “Supplementary“, "S", or any clear variant indicating it is a supplementary figure, 
+then set "figure_type": "supplemental"; otherwise leave it as "main".
 * Generate a short title for the figure. If you need to add formatting to the title,
 use Markdown.
 * Respond ONLY with a JSON object matching this schema:

@@ -85,6 +85,10 @@ results, which fill the gap you just established. It differs from the abstract i
 the following ways: it does not need to present the context (which has just been
 given), it is somewhat more specific about the results, and it only briefly
 previews the conclusion of the paper, if at all.
+
+* When referring to data presented in supplementary figures (i.e., those figures with 
+the words Supp., Supplemental, S, etc.), cite them with the format the user used, 
+for example “Figure S1” is Figure S1, "Supplemental Figure 1" is Suplemental Figure 1, etc.
 ```
 
 # Output

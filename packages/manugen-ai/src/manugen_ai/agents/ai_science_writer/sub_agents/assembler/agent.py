@@ -29,6 +29,14 @@ def manuscript_assembler(callback_context: CallbackContext) -> Optional[types.Co
 
             # then remove the instruction key from the state
             callback_context.state[instructions_key] = ""
+            
+    # ---------- Append Supplementary Figures section, if any ----------
+    if "supplementary_figures" in current_state and current_state["supplementary_figures"].strip():
+        manuscript_content += (
+            "\n# Supplementary Figures\n\n"
+            f"{current_state['supplementary_figures']}"
+        )
+    # ------------------------------------------------------------------
 
     return types.Content(
         parts=[types.Part(text=manuscript_content)],

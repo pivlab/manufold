@@ -81,9 +81,13 @@ const acceptFiles = async (files: any[]) => {
         if (uploadedFileName.value === "") {
           uploadedFileName.value = file.filename;
         }
-
+        const name = uploadedFileName.value.trim() || file.filename
         try {
-          const response = await uploadArtifact(props.session, file.filename, uploadContent, file.mimetype)
+            const response = await uploadArtifact(
+              props.session,
+              name,
+              uploadContent,
+              file.mimetype)
 
           console.log("File uploaded successfully:", response);
 
@@ -94,7 +98,7 @@ const acceptFiles = async (files: any[]) => {
 
           // add it to the list of artifacts
           artifacts.value.push({
-            filename: `Figure ${desc.figure_number}`,
+            filename: name,
             title: desc.title,
             description: desc.description,
             mimetype: file.mimetype,

@@ -73,6 +73,10 @@ and with how the literature alleviates concerns or how future experiments can
 deal with these weaknesses. The fifth paragraph may then culminate in a
 description of how the paper moves the field forward. Step by step, the reader
 thus learns to put the paper’s conclusions into the right context.
+
+* When referring to data presented in supplementary figures (i.e., those figures with 
+the words Supp., Supplemental, S, etc.), cite them with the format the user used, 
+for example “Figure S1” is Figure S1, "Supplemental Figure 1" is Suplemental Figure 1, etc.
 ```
 
 # Output

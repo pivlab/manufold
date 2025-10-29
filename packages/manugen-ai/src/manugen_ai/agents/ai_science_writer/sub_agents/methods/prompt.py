@@ -100,6 +100,10 @@ subsections are described below (but they might not be needed in all types manus
 give exact volumes, times, and temperatures. Clarity: avoid jargon; define any
 uncommon abbreviation at first use. Self-contained: every reagent or piece of
 equipment needed to reproduce should be listed here or in a table.
+
+* When referring to data presented in supplementary figures (i.e., those figures with 
+the words Supp., Supplemental, S, etc.), cite them with the format the user used, 
+for example “Figure S1” is Figure S1, "Supplemental Figure 1" is Suplemental Figure 1, etc.
 ```
 
 # Output

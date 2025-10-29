@@ -25,14 +25,15 @@ def prepare_instructions(callback_context: CallbackContext) -> Optional[types.Co
             callback_context.state[key1] = ""
 
     # add figures descriptions
-    figure_descriptions = ""
+    callback_context.state[FIGURES_DESCRIPTIONS_KEY] = ""
     if FIGURES_KEY in current_state:
-        current_figure_state = current_state[FIGURES_KEY]
-        for figure_number, figure_data in current_figure_state.items():
-            figure_descriptions += f"Figure {figure_number}: {figure_data['title']}\n{figure_data['description']}\n\n"
-
-    callback_context.state[FIGURES_DESCRIPTIONS_KEY] = figure_descriptions.strip()
-
+        figure_descriptions = ""
+        for num, fig in current_state[FIGURES_KEY].items():
+            label = fig.get("display_name", f"Figure {num}")
+            figure_descriptions += (
+                f"{label}: {fig['title']}\n{fig['description']}\n\n"
+            )
+        callback_context.state[FIGURES_DESCRIPTIONS_KEY] = figure_descriptions.strip()
 
 class ManuscriptStructure(BaseModel):
     title: str = Field(default="")

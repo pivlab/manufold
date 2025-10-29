@@ -25,6 +25,8 @@ You receive content from the user.
 Your job:
 1. Provide a concise bullet-list of any changes needed.
 2. If **no** changes are needed (content is publication-ready), call the tool `exit_loop` instead of returning bullets.
+3. Ensure there are no captions in `{supplementary_figures}` that lack a matching citation
+
 
 Return either:
 - A JSON list of feedback bullets,

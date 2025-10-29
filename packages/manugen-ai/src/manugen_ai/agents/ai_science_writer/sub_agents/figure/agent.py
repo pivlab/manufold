@@ -38,10 +38,21 @@ def process_figure_response(
     # get current state
     state = callback_context.state
 
-    # get agent description about figure
-    figure_desc = llm_response.content.parts[0].text
-    figure_desc_obj = SingleFigureDescription.model_validate_json(figure_desc)
+    # parse the LLM’s JSON into our Pydantic model
+    raw = llm_response.content.parts[0].text
+    figure_desc_obj = SingleFigureDescription.model_validate_json(raw)
 
+    # locate the uploaded‐file part anywhere in user_content.parts
+    incoming = None
+    for part in callback_context._invocation_context.user_content.parts:
+        if getattr(part, "inline_data", None) is not None:
+            incoming = part.inline_data
+            break
+
+    # if the user gave a filename, stash it and override figure title
+    if incoming and getattr(incoming, "display_name", None):
+        callback_context.state["current_display_name"] = incoming.display_name
+        figure_desc_obj.title = incoming.display_name
     # compute figure number
     current_figure_id = 1
     if FIGURES_KEY in state:
@@ -75,16 +86,20 @@ def update_figure_state(
 
     current_figure = state[CURRENT_FIGURE_KEY]
     current_figure_obj = SingleFigureDescription.model_validate(current_figure)
-
-    if FIGURES_KEY not in state:
-        state[FIGURES_KEY] = {}
-
-    current_figure_state = state[FIGURES_KEY]
-    current_figure_state[current_figure_obj.figure_number] = {
-        k: v for k, v in current_figure_obj.model_dump().items() if k != "figure_number"
-    }
-
+    # load or initialize the figures dict, then store it back on state
+    current_figure_state = state.get(FIGURES_KEY, {})
     state[FIGURES_KEY] = current_figure_state
+
+    entry = {
+        k: v
+        for k, v in current_figure_obj.model_dump().items()
+        if k != "figure_number"
+    }
+    # preserve any user‑provided filename exactly
+    display_label = state.get("current_display_name", None)
+    if display_label is not None:
+        entry["display_name"] = display_label
+    current_figure_state[current_figure_obj.figure_number] = entry
 
     state[CURRENT_FIGURE_KEY] = ""
 
