@@ -78,6 +78,13 @@ def get_llm(model_name: str, **kwargs):
     """
     from google.adk.models.lite_llm import LiteLlm
 
+    # check that our model_name is not None
+    if model_name is None:
+        raise ValueError("model_name cannot be None")
+
+    # normalize model name to lowercase for consistent matching
+    model_name = str(model_name).lower()
+
     if model_name.startswith(("openai/", "anthropic/")):
         # kwargs are interpreted as additional arguments to LiteLlm, such as
         # "response_format=ManuscriptStructure"
