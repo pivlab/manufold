@@ -54,12 +54,7 @@ async def test_agent_citations():
             session_id="001",
             verbose=True,
         )
-        """if "output" in session_state and session_state["output"] == expected_output:
-            break
-        if attempt == 4:
-            # Final attempt failed, raise assertion
-            assert "output" in session_state.keys()
-            assert session_state["output"] == expected_output"""
+        # look for at least 3 citations like [1], [2], etc.
         if "enhanced_draft" in session_state and len(re.findall(r'\[\d+\]', session_state["enhanced_draft"])) >= 3:
             break
         if attempt == 4:
