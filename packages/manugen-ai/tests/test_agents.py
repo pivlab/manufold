@@ -2,10 +2,13 @@
 Tests for various agents
 """
 
-import pytest
 import re
+
+import pytest
+from manugen_ai.agents.ai_science_writer.sub_agents.citations.agent import (
+    root_agent as citations_agent,
+)
 from manugen_ai.agents.capitalizer.agent import root_agent as capitalizer_agent
-from manugen_ai.agents.ai_science_writer.sub_agents.citations.agent import root_agent as citations_agent
 from manugen_ai.utils import run_agent_workflow
 
 
@@ -35,17 +38,17 @@ async def test_agent_capitalizer():
             assert "output" in session_state.keys()
             assert session_state["output"] == expected_output
 
+
 @pytest.mark.asyncio
 async def test_agent_citations():
-
     # retry 5 times
     for attempt in range(5):
         _, session_state, _ = await run_agent_workflow(
             agent=citations_agent,
             prompt="""
-            CellProfiler is a free open-source software designed to 
-            enable biologists without training in computer vision or 
-            programming to quantitatively measure phenotypes from 
+            CellProfiler is a free open-source software designed to
+            enable biologists without training in computer vision or
+            programming to quantitatively measure phenotypes from
             thousands of images automatically. More information can
             be found in the CellProfiler Wiki.
             """,
@@ -55,8 +58,11 @@ async def test_agent_citations():
             verbose=True,
         )
         # look for at least 3 citations like [1], [2], etc.
-        if "enhanced_draft" in session_state and len(re.findall(r'\[\d+\]', session_state["enhanced_draft"])) >= 3:
+        if (
+            "enhanced_draft" in session_state
+            and len(re.findall(r"\[\d+\]", session_state["enhanced_draft"])) >= 3
+        ):
             break
         if attempt == 4:
             assert "enhanced_draft" in session_state.keys()
-            assert len(re.findall(r'\[\d+\]', session_state["enhanced_draft"])) >= 3
+            assert len(re.findall(r"\[\d+\]", session_state["enhanced_draft"])) >= 3
