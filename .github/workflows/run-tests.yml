@@ -43,5 +43,5 @@ jobs:
         env:
           # use the same models here to keep ci run duration low
           # by avoiding extra downloads
-          MAI_GENERAL_MODEL_NAME: "openai/llama3.2:3b"
-          MAI_CODE_SPECIALIST_MODEL_NAME: "openai/llama3.2:3b"
+          MANUGENAI_MODEL_NAME: "openai/llama3.2:3b"
+          MANUGENAI_FIGURE_MODEL_NAME: "openai/llama3.2:3b"

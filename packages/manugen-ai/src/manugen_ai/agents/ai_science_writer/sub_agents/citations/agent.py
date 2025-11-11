@@ -13,7 +13,7 @@ from manugen_ai.agents.meta_agent import ResilientToolAgent
 from manugen_ai.tools.tools import openalex_query, parse_list
 from manugen_ai.utils import get_llm
 
-MODEL_NAME = os.environ.get("MAI_GENERAL_MODEL_NAME")
+MODEL_NAME = os.environ.get("MANUGENAI_MODEL_NAME")
 LLM = get_llm(MODEL_NAME)
 
 parse_list_tool = FunctionTool(func=parse_list)
