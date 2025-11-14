@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import draggable from "vuedraggable";
 import { useEventListener, useStorage } from "@vueuse/core";
-import { isEqual } from "lodash";
+import { isEqual, kebabCase } from "lodash";
 import {
   Upload as ArrowUp,
   BookX,
@@ -135,6 +135,14 @@ const output = computed(() =>
 
 /** output markdown converted to html */
 const outputHtml = computed(() => micromark(output.value));
+
+/** modify output html  */
+const modifyHtml = (document: Document) => {
+  for (const heading of document.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+    heading.id = kebabCase(heading.textContent?.trim());
+
+  return document;
+};
 
 /** upload section file */
 const uploadInput = async (files: Upload[]) => {
@@ -297,6 +305,21 @@ const runAction = async ({ name, prefix, check }: Action) => {
   stopThinking();
   running.value = false;
 };
+
+/** when selected tab changes, scroll to section in output */
+watch(
+  tab,
+  (tab) => {
+    if (!outputElement.value) return;
+    let name = sections.value[tab]?.name;
+    if (!name) return;
+    name = kebabCase(name);
+    outputElement.value.element?.contentDocument
+      ?.getElementById(name)
+      ?.scrollIntoView({ behavior: "smooth" });
+  },
+  { immediate: true },
+);
 
 /** save output as markdown */
 const saveMd = () => downloadMd(output.value, nameFallback.value);
@@ -624,6 +647,7 @@ watch(
       :title="nameFallback"
       :styles="outputStyles"
       :body="outputHtml"
+      :modify="modifyHtml"
       class="min-w-0 flex-grow border-l border-slate-300"
     />
   </main>
