@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
-import draggableComponent from "vuedraggable";
+import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
+import draggable from "vuedraggable";
 import { useEventListener, useStorage } from "@vueuse/core";
 import { isEqual } from "lodash";
 import {
@@ -26,12 +26,13 @@ import type { Session } from "@/api/api";
 import logo from "@/assets/logo.svg";
 import AppBrain, { think } from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
+import AppTabs from "@/components/AppTabs.vue";
 import { toast } from "@/components/AppToasts";
 import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import styles from "@/styles.css?inline";
 import { downloadHtml, downloadMd } from "@/util/download";
-import { hash, selectElementText, sleep } from "@/util/misc";
+import { hash, selectElementText } from "@/util/misc";
 import {
   imageAccepts,
   imageExtensions,
@@ -65,6 +66,7 @@ onMounted(async () => {
 
 /** elements */
 const figureElement = useTemplateRef("figureElement");
+// @ts-expect-error typing doesn't support dynamic refs
 const inputElement = useTemplateRef("inputElement");
 const outputElement = useTemplateRef("outputElement");
 
@@ -82,10 +84,7 @@ const updateSelection = () => {
 };
 
 /** for dev */
-// window.localStorage.clear();
-
-/** current input */
-const input = useStorage("input", "");
+window.localStorage.clear();
 
 /** document name */
 const name = useStorage("name", "");
@@ -93,25 +92,64 @@ const name = useStorage("name", "");
 /** document name, with fallback */
 const nameFallback = computed(() => name.value.trim() || "manuscript");
 
-/** input upload */
-const upload = ref<Upload | null>(null);
+/** current input */
+const inputs = useStorage<{ name: string; content: string }[]>("input", [
+  { name: "Abstract", content: "" },
+  { name: "Introduction", content: "" },
+  { name: "Results", content: "" },
+  { name: "Discussion", content: "" },
+  { name: "Methods", content: "" },
+]);
+
+/** current tab */
+const tab = useStorage("tab", 0);
+
+/** add new input tab */
+const addInput = () => inputs.value.push({ name: "Section", content: "" });
+
+/** delete input tab */
+const deleteInput = (index: number) => {
+  if (!window.confirm("Delete this input? No undo!")) return;
+  inputs.value.splice(index, 1);
+};
+
+/** reorder input tabs */
+const reorderInputs = (from: number, to: number) => {
+  const moved = inputs.value.splice(from, 1)[0];
+  if (moved) inputs.value.splice(to, 0, moved);
+};
+
+/** rename input tab */
+const renameInputs = (index: number, name: string) => {
+  if (inputs.value[index]) inputs.value[index].name = name;
+};
 
 /** current output */
-const output = computed(() => micromark(input.value));
+const output = computed(() =>
+  micromark(inputs.value[tab.value]?.content ?? ""),
+);
 
 /** upload input file */
-const uploadInput = (files: Upload[]) => {
-  input.value = files.map((file) => file.data).join("\n\n");
-  if (files[0]) {
-    name.value = files[0].name;
-    upload.value = { ...files[0] };
-  }
+const uploadInput = async (files: Upload[]) => {
+  for (const file of files)
+    inputs.value.push({ name: file.name, content: file.data });
+  await nextTick();
+  tab.value = inputs.value.length - 1;
+  toast(`Uploaded ${files.length} file(s)`, "success");
 };
 
 const examples = {
   "Draft from skeleton w/ figs": {
     name: "Example Manuscript",
-    input: { data: example1, filename: "example.md", type: "text/markdown" },
+    inputs: example1
+      .split(/^# /gm)
+      .map((section) => section.trim())
+      .filter(Boolean)
+      .map((section) => ({
+        data: `# ${section}`,
+        name: section.split("\n").shift()?.trim() ?? "file",
+        type: "text/markdown",
+      })),
     figures: [
       { data: example1Fig1, filename: "fig-1.png", type: "image/png" },
       { data: example1Fig2, filename: "fig-2.png", type: "image/png" },
@@ -120,7 +158,7 @@ const examples = {
   },
   "Draft from GitHub repo": {
     name: "Example Manuscript",
-    input: { data: example2, filename: "example.md", type: "text/markdown" },
+    inputs: [{ data: example2, name: "Example", type: "text/markdown" }],
     figures: [],
   },
 };
@@ -129,12 +167,10 @@ const examples = {
 const loadExample = async (key: keyof typeof examples) => {
   const example = examples[key];
   name.value = example.name;
-  input.value = example.input.data;
-  upload.value = await parseFile(
-    new File([example.input.data], example.input.filename, {
-      type: example.input.type,
-    }),
-  );
+  inputs.value = example.inputs.map(({ data, name }) => ({
+    content: data,
+    name,
+  }));
   figures.value = await Promise.all(
     example.figures.map(({ data, filename, type }) =>
       parseFile(new File([data], filename, { type })),
@@ -225,7 +261,7 @@ const runAction = async (prefix: string, name: string) => {
 
     /** un-disable input element */
     running.value = false;
-    await sleep();
+    await nextTick();
 
     /** re-focus input */
     inputElement.value?.focus();
@@ -271,7 +307,7 @@ const savePdf = async () => {
   const oldTitle = document.title;
   document.title = nameFallback.value;
   outputElement.value?.classList.add("print");
-  await sleep();
+  await nextTick();
   window.print();
   outputElement.value?.classList.remove("print");
   document.title = oldTitle;
@@ -405,8 +441,6 @@ watch(
       </VDropdown>
 
       <input v-model="name" placeholder="New Manuscript" />
-
-      <AppUploadBadge v-if="upload" :upload="upload" />
     </div>
 
     <!-- header middle -->
@@ -480,7 +514,7 @@ watch(
         </template>
       </div>
 
-      <draggableComponent
+      <draggable
         v-model="figures"
         item-key="id"
         handle="img"
@@ -522,11 +556,42 @@ watch(
             </div>
           </div>
         </template>
-      </draggableComponent>
+      </draggable>
     </aside>
 
     <!-- input panel -->
     <div class="flex w-[50%] shrink-0 resize-x flex-col items-center gap-2">
+      <!-- tabs -->
+      <AppTabs
+        v-model="tab"
+        :tabs="inputs.map(({ name }) => ({ name }))"
+        @add="addInput"
+        @close="deleteInput"
+        @reorder="reorderInputs"
+        @rename="renameInputs"
+      >
+        <template v-for="(_, index) in inputs" :key="index" #[index]>
+          <!-- text input -->
+          <textarea
+            :ref="tab === index ? 'inputElement' : undefined"
+            placeholder="Start writing your manuscript Markdown here"
+            class="h-full w-full resize-none p-4!"
+            :class="running ? 'user-select-none pointer-events-none' : ''"
+            :disabled="running"
+            :draggable="false"
+            :value="inputs[tab]?.content"
+            @input="
+              (event) =>
+                (inputs[tab]!.content = (
+                  event.target as HTMLTextAreaElement
+                ).value)
+            "
+            @select="updateSelection"
+            @selectionchange="updateSelection"
+          />
+        </template>
+      </AppTabs>
+
       <!-- ai actions -->
       <div class="flex flex-wrap items-center justify-center gap-2">
         <AppButton
@@ -547,19 +612,6 @@ watch(
           <span>{{ action.name }}</span>
         </AppButton>
       </div>
-
-      <!-- text input -->
-      <textarea
-        ref="inputElement"
-        v-model="input"
-        placeholder="Start writing your manuscript Markdown here"
-        class="h-full w-full resize-none p-4!"
-        :class="running ? 'user-select-none pointer-events-none' : ''"
-        :disabled="running"
-        :draggable="false"
-        @select="updateSelection"
-        @selectionchange="updateSelection"
-      />
     </div>
 
     <!-- output panel -->
@@ -591,6 +643,6 @@ header > :last-child {
 }
 
 main > * {
-  @apply overflow-y-auto;
+  @apply overflow-y-auto p-4;
 }
 </style>
