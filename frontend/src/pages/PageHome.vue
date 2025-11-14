@@ -10,6 +10,7 @@ import {
   Download,
   Feather,
   FileImage,
+  FileStack,
   GitFork,
   ImageUp,
   LibraryBig,
@@ -26,11 +27,12 @@ import type { Session } from "@/api/api";
 import logo from "@/assets/logo.svg";
 import AppBrain, { think } from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
+import AppFrame from "@/components/AppFrame.vue";
 import AppTabs from "@/components/AppTabs.vue";
 import { toast } from "@/components/AppToasts";
 import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
-import styles from "@/styles.css?inline";
+import outputStyles from "@/output.css?inline";
 import { downloadHtml, downloadMd } from "@/util/download";
 import { hash, selectElementText } from "@/util/misc";
 import {
@@ -70,10 +72,10 @@ const figureElement = useTemplateRef("figureElement");
 const inputElement = useTemplateRef("inputElement");
 const outputElement = useTemplateRef("outputElement");
 
-/** keep track of selected text in input */
+/** keep track of selected text in section */
 const selection = ref("");
 
-/** update input selected text */
+/** update section selected text */
 const updateSelection = () => {
   if (!inputElement.value) return;
   const { selectionStart, selectionEnd } = inputElement.value;
@@ -84,7 +86,7 @@ const updateSelection = () => {
 };
 
 /** for dev */
-window.localStorage.clear();
+// window.localStorage.clear();
 
 /** document name */
 const name = useStorage("name", "");
@@ -92,52 +94,61 @@ const name = useStorage("name", "");
 /** document name, with fallback */
 const nameFallback = computed(() => name.value.trim() || "manuscript");
 
-/** current input */
-const inputs = useStorage<{ name: string; content: string }[]>("input", [
+/** current section */
+const sections = useStorage<{ name: string; content: string }[]>("section", [
   { name: "Section", content: "" },
 ]);
 
 /** current tab */
 const tab = useStorage("tab", 0);
 
-/** add new input tab */
-const addInput = () => inputs.value.push({ name: "Section", content: "" });
+/** add new section tab */
+const addInput = () => sections.value.push({ name: "Section", content: "" });
 
-/** delete input tab */
+/** delete section tab */
 const deleteInput = (index: number) => {
-  if (!window.confirm("Delete this input? No undo!")) return;
-  inputs.value.splice(index, 1);
+  if (!window.confirm("Delete this section? No undo!")) return;
+  sections.value.splice(index, 1);
 };
 
-/** reorder input tabs */
+/** reorder section tabs */
 const reorderInputs = (from: number, to: number) => {
-  const moved = inputs.value.splice(from, 1)[0];
-  if (moved) inputs.value.splice(to, 0, moved);
+  const moved = sections.value.splice(from, 1)[0];
+  if (moved) sections.value.splice(to, 0, moved);
 };
 
-/** rename input tab */
+/** rename section tab */
 const renameInputs = (index: number, name: string) => {
-  if (inputs.value[index]) inputs.value[index].name = name;
+  if (sections.value[index]) sections.value[index].name = name;
 };
 
-/** current output */
+/** whether output all sections together */
+const combineInput = useStorage("combine-input", false);
+
+/** output markdown */
 const output = computed(() =>
-  micromark(inputs.value[tab.value]?.content ?? ""),
+  (combineInput.value ? sections.value : [sections.value[tab.value]])
+    .filter((section) => section !== undefined)
+    .map((section) => section.content)
+    .join("\n\n"),
 );
 
-/** upload input file */
+/** output markdown converted to html */
+const outputHtml = computed(() => micromark(output.value));
+
+/** upload section file */
 const uploadInput = async (files: Upload[]) => {
   for (const file of files)
-    inputs.value.push({ name: file.name, content: file.data });
+    sections.value.push({ name: file.name, content: file.data });
   await nextTick();
-  tab.value = inputs.value.length - 1;
+  tab.value = sections.value.length - 1;
   toast(`Uploaded ${files.length} file(s)`, "success");
 };
 
 const examples = {
   "Draft from skeleton w/ figs": {
     name: "Example Manuscript",
-    inputs: example1
+    sections: example1
       .split(/^# /gm)
       .map((section) => section.trim())
       .filter(Boolean)
@@ -154,7 +165,7 @@ const examples = {
   },
   "Draft from GitHub repo": {
     name: "Example Manuscript",
-    inputs: [{ data: example2, name: "Example", type: "text/markdown" }],
+    sections: [{ data: example2, name: "Example", type: "text/markdown" }],
     figures: [],
   },
 };
@@ -163,7 +174,7 @@ const examples = {
 const loadExample = async (key: keyof typeof examples) => {
   const example = examples[key];
   name.value = example.name;
-  inputs.value = example.inputs.map(({ data, name }) => ({
+  sections.value = example.sections.map(({ data, name }) => ({
     content: data,
     name,
   }));
@@ -176,12 +187,8 @@ const loadExample = async (key: keyof typeof examples) => {
 };
 
 /** check h1 */
-const checkHeading = (input: string) => {
-  console.log(input);
-  return !input.match(/^# .+/gm)
-    ? "Need top-level heading for action context"
-    : "";
-};
+const checkHeading = (section: string) =>
+  !section.match(/^# .+/gm) ? "Need top-level heading for action context" : "";
 
 /** ai agent actions */
 const actions = computed(() => [
@@ -218,8 +225,8 @@ const actions = computed(() => [
     icon: GitFork,
     tooltip: "Draft section based on GitHub repo contents",
     prefix: "$REPO_REQUEST$",
-    check: (input: string) =>
-      !input.match(/https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/)
+    check: (section: string) =>
+      !section.match(/https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/)
         ? "No GitHub repo URL found"
         : "",
   },
@@ -249,11 +256,11 @@ const runAction = async ({ name, prefix, check }: Action) => {
   running.value = true;
 
   /** use selected text, or full text */
-  const input =
-    selection.value.trim() || inputs.value[tab.value]?.content.trim();
+  const section =
+    selection.value.trim() || sections.value[tab.value]?.content.trim();
 
-  /** check if action is compatible with input */
-  const error = check?.(input ?? "");
+  /** check if action is compatible with section */
+  const error = check?.(section ?? "");
   if (error) {
     update(error, "error");
     stopThinking();
@@ -264,18 +271,18 @@ const runAction = async ({ name, prefix, check }: Action) => {
   try {
     /** run ai action */
     const result = await aiScienceWriter(
-      `${prefix}${input}`,
+      `${prefix}${section}`,
       session.value,
       (message) => toast(message, "info"),
     );
 
     if (!result) throw new Error("No result from AI service");
 
-    /** un-disable input element */
+    /** un-disable section element */
     running.value = false;
     await nextTick();
 
-    /** re-focus input */
+    /** re-focus section */
     inputElement.value?.focus();
 
     /** paste result into selection, w/ browser undo history */
@@ -296,33 +303,13 @@ const saveMd = () => downloadMd(output.value, nameFallback.value);
 
 /** save output as html */
 const saveHtml = () => {
-  let content = outputElement.value?.outerHTML;
-  if (!content) return;
-  content = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<style>${styles}</style>
-</head>
-<body>
-${content}
-</body>
-</html>
-`;
-  downloadHtml(content, nameFallback.value);
+  if (outputElement.value)
+    downloadHtml(outputElement.value.src, nameFallback.value);
 };
 
 /** print output as pdf */
 const savePdf = async () => {
-  const oldTitle = document.title;
-  document.title = nameFallback.value;
-  outputElement.value?.classList.add("print");
-  await nextTick();
-  window.print();
-  outputElement.value?.classList.remove("print");
-  document.title = oldTitle;
+  outputElement.value?.element?.contentWindow?.print();
 };
 
 /** intercept ctrl + p */
@@ -417,8 +404,8 @@ watch(
       </AppUpload>
 
       <AppButton
-        v-tooltip="showFigures ? 'Hide figures panel' : 'Show figures planel'"
-        :active="showFigures"
+        v-tooltip="showFigures ? 'Hide figures panel' : 'Show figures panel'"
+        :design="showFigures ? 'active' : undefined"
         @click="showFigures = !showFigures"
       >
         <FileImage />
@@ -466,6 +453,16 @@ watch(
 
     <!-- header right -->
     <div>
+      <AppButton
+        v-tooltip="
+          combineInput ? 'Show selected section' : 'Show combined sections'
+        "
+        :design="combineInput ? 'active' : undefined"
+        @click="combineInput = !combineInput"
+      >
+        <FileStack />
+      </AppButton>
+
       <VDropdown>
         <AppButton v-tooltip="'Download output'" design="primary">
           <Download />
@@ -497,7 +494,7 @@ watch(
     <aside
       v-show="showFigures"
       ref="figureElement"
-      class="flex w-60 shrink-0 resize-x flex-col items-center bg-slate-100 transition-[margin,translate]"
+      class="flex w-60 shrink-0 resize-x flex-col items-center border-r border-slate-300 transition-[margin,translate]"
     >
       <div class="flex items-center gap-2 p-4">
         <AppUpload
@@ -540,7 +537,7 @@ watch(
               <img
                 v-tooltip="'Drag to reorder'"
                 :src="element.uri"
-                class="h-full w-full cursor-grab object-cover shadow"
+                class="h-full w-full cursor-grab border border-slate-300 object-cover"
               />
             </div>
             <div class="flex items-center gap-2">
@@ -571,19 +568,21 @@ watch(
       </draggable>
     </aside>
 
-    <!-- input panel -->
-    <div class="flex w-[50%] shrink-0 resize-x flex-col items-center gap-2">
+    <!-- section panel -->
+    <div
+      class="flex w-[50%] shrink-0 resize-x flex-col items-center gap-4 px-8 py-4"
+    >
       <!-- tabs -->
       <AppTabs
         v-model="tab"
-        :tabs="inputs.map(({ name }) => ({ name }))"
+        :tabs="sections.map(({ name }) => ({ name }))"
         @add="addInput"
         @close="deleteInput"
         @reorder="reorderInputs"
         @rename="renameInputs"
       >
-        <template v-for="(_, index) in inputs" :key="index" #[index]>
-          <!-- text input -->
+        <template v-for="(_, index) in sections" :key="index" #[index]>
+          <!-- text section -->
           <textarea
             :ref="tab === index ? 'inputElement' : undefined"
             placeholder="Start writing your manuscript Markdown here"
@@ -591,10 +590,10 @@ watch(
             :class="running ? 'user-select-none pointer-events-none' : ''"
             :disabled="running"
             :draggable="false"
-            :value="inputs[tab]?.content"
+            :value="sections[tab]?.content"
             @input="
               (event) =>
-                (inputs[tab]!.content = (
+                (sections[tab]!.content = (
                   event.target as HTMLTextAreaElement
                 ).value)
             "
@@ -620,10 +619,12 @@ watch(
     </div>
 
     <!-- output panel -->
-    <div
+    <AppFrame
       ref="outputElement"
-      class="flex flex-grow flex-col gap-4 bg-slate-100 p-4"
-      v-html="output"
+      :title="nameFallback"
+      :styles="outputStyles"
+      :body="outputHtml"
+      class="min-w-0 flex-grow border-l border-slate-300"
     />
   </main>
 </template>
@@ -648,6 +649,6 @@ header > :last-child {
 }
 
 main > * {
-  @apply overflow-y-auto p-4;
+  @apply overflow-y-auto;
 }
 </style>

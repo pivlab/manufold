@@ -14,7 +14,7 @@ import { toasts, types } from "./AppToasts";
     <div
       v-for="toast in toasts"
       :key="toast.value.id"
-      class="flex max-w-80 items-center gap-2 rounded-lg border-1 border-black/10 bg-white p-4 shadow-sm"
+      class="flex max-w-80 items-center gap-2 rounded border border-slate-300 bg-white p-4"
       role="alert"
     >
       <component
@@ -24,7 +24,7 @@ import { toasts, types } from "./AppToasts";
       />
       <span class="flex-1" v-html="toast.value.message" />
       <button
-        class="h-5 w-5 text-slate-500 hover:text-slate-900"
+        class="hover:text-primary h-5 w-5 text-slate-500"
         aria-label="Close"
         @click="toast.value.close"
       >

@@ -2,11 +2,10 @@
 import { useTemplateRef } from "vue";
 
 type Props = {
-  design?: "primary" | "secondary";
-  active?: boolean;
+  design?: "primary" | "secondary" | "active";
 };
 
-const { design = "secondary", active = false } = defineProps<Props>();
+const { design = "secondary" } = defineProps<Props>();
 
 const element = useTemplateRef("element");
 
@@ -16,10 +15,9 @@ defineExpose({ element });
 <template>
   <button
     ref="element"
-    class="relative min-h-8 min-w-8! rounded-full border-2"
+    class="relative min-h-8 min-w-8! rounded-full"
     :class="[
-      active ? 'border-current' : 'border-transparent',
-      design === 'primary'
+      design === 'primary' || design === 'active'
         ? 'bg-primary text-white hover:bg-slate-700'
         : 'text-primary hover:text-slate-700',
     ]"
@@ -32,6 +30,6 @@ defineExpose({ element });
 @reference "tailwindcss";
 
 button:has(span) {
-  @apply px-3;
+  @apply px-2;
 }
 </style>

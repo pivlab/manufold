@@ -82,7 +82,7 @@ const finishRename = () => {
         <template #item="{ element, index }: { element: Tab; index: number }">
           <Tab v-slot="{ selected }" as="template">
             <div
-              class="flex cursor-pointer items-stretch border-b-2 transition-colors hover:bg-slate-100"
+              class="flex cursor-pointer items-stretch border-b transition-colors hover:bg-slate-100"
               :class="[selected ? 'border-primary' : 'border-slate-300']"
               @dblclick="startRename(index)"
             >
@@ -108,7 +108,7 @@ const finishRename = () => {
                 >{{ element.name }}</span
               >
               <button
-                class="hover:text-primary px-1 text-slate-300"
+                class="hover:text-primary px-1 text-slate-500"
                 aria-label="Close tab"
                 @mousedown.stop
                 @touchstart.stop
@@ -121,15 +121,20 @@ const finishRename = () => {
         </template>
       </draggable>
       <button
-        v-tooltip="'Add tab'"
-        class="flex cursor-pointer items-center border-b-2 border-slate-300 p-2 transition-colors hover:bg-slate-100"
+        aria-label="Add tab"
+        class="hover:text-primary flex cursor-pointer items-center border-b border-slate-300 p-2 text-slate-500 transition-colors hover:bg-slate-100"
         @click="add"
       >
         <Plus />
       </button>
     </TabList>
     <TabPanels class="contents">
-      <TabPanel v-for="(tab, index) in tabs" :key="index" class="contents">
+      <TabPanel
+        v-for="(tab, index) in tabs"
+        :key="index"
+        class="contents"
+        :unmount="false"
+      >
         <slot :name="index" />
       </TabPanel>
     </TabPanels>
