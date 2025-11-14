@@ -140,4 +140,3 @@ html:has(.print) :not(:has(.print), .print, .print *) {
 .sortable-chosen {
   @apply opacity-25 grayscale;
 }
-

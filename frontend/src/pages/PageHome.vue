@@ -94,11 +94,7 @@ const nameFallback = computed(() => name.value.trim() || "manuscript");
 
 /** current input */
 const inputs = useStorage<{ name: string; content: string }[]>("input", [
-  { name: "Abstract", content: "" },
-  { name: "Introduction", content: "" },
-  { name: "Results", content: "" },
-  { name: "Discussion", content: "" },
-  { name: "Methods", content: "" },
+  { name: "Section", content: "" },
 ]);
 
 /** current tab */
@@ -179,60 +175,63 @@ const loadExample = async (key: keyof typeof examples) => {
   toast("Loaded example", "success");
 };
 
+/** check h1 */
+const checkHeading = (input: string) => {
+  console.log(input);
+  return !input.match(/^# .+/gm)
+    ? "Need top-level heading for action context"
+    : "";
+};
+
 /** ai agent actions */
 const actions = computed(() => [
   {
     name: "Draft",
     icon: Feather,
-    tooltip:
-      "Select one # Heading 1 section and its content, then click to draft",
+    tooltip: "Draft section based on high-level outlines or descriptions",
     prefix: "",
-    enabled:
-      /** starts with h1 */
-      selection.value.trim().startsWith("# ") &&
-      /** only has 1 h1 */
-      [...selection.value.matchAll(/^# /gm)].length === 1 &&
-      /** has non-h1 line */
-      [...selection.value.matchAll(/^\s*[^#\s]/gm)].length,
+    check: checkHeading,
   },
   {
     name: "Refine",
     icon: Sparkles,
-    tooltip: "Select text, then click to revise and improve",
+    tooltip: "Revise and improve",
     prefix: "$REFINE_REQUEST$",
-    enabled: !!selection.value.trim(),
+    check: checkHeading,
   },
   {
     name: "Verify",
     icon: BookX,
-    tooltip: "Select text, then click to find and avoid reasons for retraction",
+    tooltip: "Find and avoid reasons for retraction",
     prefix: "$RETRACTION_AVOIDANCE_REQUEST$",
-    enabled: !!selection.value.trim(),
+    check: checkHeading,
   },
   {
     name: "Citations",
     icon: LibraryBig,
-    tooltip: "Select text, then click to find and add relevant citations",
+    tooltip: "Find and add relevant citations",
     prefix: "$CITATION_REQUEST$",
-    enabled: !!selection.value.trim(),
+    check: checkHeading,
   },
   {
     name: "Repo",
     icon: GitFork,
-    tooltip:
-      "Select a full GitHub repo URL, then click to draft based on its content",
+    tooltip: "Draft section based on GitHub repo contents",
     prefix: "$REPO_REQUEST$",
-    enabled: !!selection.value
-      .trim()
-      .match(/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/),
+    check: (input: string) =>
+      !input.match(/https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/)
+        ? "No GitHub repo URL found"
+        : "",
   },
 ]);
+
+type Action = (typeof actions.value)[number];
 
 /** is action currently running */
 const running = ref(false);
 
 /** run ai action with ai service */
-const runAction = async (prefix: string, name: string) => {
+const runAction = async ({ name, prefix, check }: Action) => {
   /** check if connected to ai service */
   if (!session.value) {
     toast("No AI service session", "error");
@@ -249,10 +248,23 @@ const runAction = async (prefix: string, name: string) => {
   const { update } = toast(`Running "${name}"`, "loading");
   running.value = true;
 
+  /** use selected text, or full text */
+  const input =
+    selection.value.trim() || inputs.value[tab.value]?.content.trim();
+
+  /** check if action is compatible with input */
+  const error = check?.(input ?? "");
+  if (error) {
+    update(error, "error");
+    stopThinking();
+    running.value = false;
+    return;
+  }
+
   try {
     /** run ai action */
     const result = await aiScienceWriter(
-      `${prefix}${selection.value}`,
+      `${prefix}${input}`,
       session.value,
       (message) => toast(message, "info"),
     );
@@ -480,12 +492,12 @@ watch(
     </div>
   </header>
 
-  <main class="flex h-0 grow gap-4 p-4">
+  <main class="flex h-0 grow">
     <!-- figure panel -->
     <aside
       v-show="showFigures"
       ref="figureElement"
-      class="flex w-60 shrink-0 resize-x flex-col items-center rounded-lg bg-slate-100 transition-[margin,translate]"
+      class="flex w-60 shrink-0 resize-x flex-col items-center bg-slate-100 transition-[margin,translate]"
     >
       <div class="flex items-center gap-2 p-4">
         <AppUpload
@@ -599,14 +611,7 @@ watch(
           :key="index"
           v-tooltip="action.tooltip"
           :disabled="running"
-          :class="
-            !action.enabled ? 'cursor-not-allowed! opacity-50 grayscale' : ''
-          "
-          @click="
-            action.enabled
-              ? runAction(action.prefix, action.name)
-              : toast('Follow button help text to use this action', 'info')
-          "
+          @click="runAction(action)"
         >
           <component :is="action.icon" />
           <span>{{ action.name }}</span>
@@ -617,7 +622,7 @@ watch(
     <!-- output panel -->
     <div
       ref="outputElement"
-      class="flex flex-grow flex-col gap-4 rounded-lg bg-slate-100 p-4"
+      class="flex flex-grow flex-col gap-4 bg-slate-100 p-4"
       v-html="output"
     />
   </main>

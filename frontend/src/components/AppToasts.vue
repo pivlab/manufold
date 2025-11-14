@@ -14,7 +14,7 @@ import { toasts, types } from "./AppToasts";
     <div
       v-for="toast in toasts"
       :key="toast.value.id"
-      class="flex items-center gap-2 rounded-lg border-1 border-black/10 bg-white p-4 shadow-sm"
+      class="flex max-w-80 items-center gap-2 rounded-lg border-1 border-black/10 bg-white p-4 shadow-sm"
       role="alert"
     >
       <component
