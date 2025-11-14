@@ -188,7 +188,7 @@ const actions = computed(() => [
   {
     name: "Draft",
     icon: Feather,
-    tooltip: "Draft section based on high-level outlines or descriptions",
+    tooltip: "Draft section based on high-level outline or description",
     prefix: "",
     check: checkHeading,
   },

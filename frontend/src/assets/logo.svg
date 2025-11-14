@@ -1,85 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-70 -70 140 220">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-125 -125 250 250">
   <!-- pen head -->
   <path
+    id="pen"
     fill="#cbd5e1"
-    stroke="#cbd5e1"
-    stroke-width="10"
+    stroke="#94a3b8"
+    stroke-width="12"
     stroke-linejoin="round"
+    stroke-linecap="round"
     d="
-      M -25 43.302
-      A 80 80 0 0 1 -35 90
-      A 100 100 0 0 1 0 140
-      A 100 100 0 0 1 35 90
-      A 80 80 0 0 1 25 43.302
-      L 0 57.735
+      M -20 -4.2
+      A 80 80 0 0 1 -40 50
+      A 100 100 0 0 1 0 110
+      A 100 100 0 0 1 40 50
+      A 80 80 0 0 1 20 -4.2
+      A 50 50 0 0 1 -20 -4.2
       z
     "
   />
 
-  <!-- shadow clip -->
-  <mask id="shadow" x="-70" y="-70" width="140" height="240">
-    <path
-      fill="white"
-      stroke="white"
-      stroke-width="10"
-      stroke-linejoin="round"
-      d="
-        M -25 43.302
-        A 80 80 0 0 1 -35 90
-        L 35 90
-        A 80 80 0 0 1 25 43.302
-        L 0 57.735
-        z
-      "
+  <!-- pen shadow -->
+  <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
+    <feDropShadow
+      in="SourceGraphic"
+      dx="0"
+      dy="10"
+      stdDeviation="0"
+      flood-color="#94a3b8"
     />
+  </filter>
+  <mask id="clip" x="-100%" y="-100%" width="300%" height="300%">
+    <use href="#pen" />
   </mask>
-
-  <!-- shadow -->
-  <path
-    mask="url(#shadow)"
-    fill="none"
-    stroke="#94a3b8"
-    stroke-width="30"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    d="
-      M -50 28.868
-      L 0 57.735
-      L 50 28.868
-    "
-  />
+  <use href="#face" filter="url(#shadow)" mask="url(#clip)" />
 
   <!-- pen divot -->
-  <circle cx="0" cy="90" r="10" fill="#ad1457" />
+  <circle cx="0" cy="45" r="12" fill="#ad1457" />
   <path
     fill="none"
     stroke="#ad1457"
-    stroke-width="10"
+    stroke-width="12"
     stroke-linecap="round"
     d="
-      M 0 90
-      L 0 140
+      M 0 45
+      L 0 110
     "
   />
 
-  <!-- hex -->
+  <!-- book fold -->
   <path
+    fill="none"
+    stroke="#ad1457"
+    stroke-width="12"
+    stroke-linecap="round"
+    d="
+      M 0 110
+      A 100 100 0 0 1 97.6 31.7
+      M 0 110
+      A 100 100 0 0 0 -97.6 31.7
+    "
+  />
+
+  <!-- face -->
+  <circle
+    id="face"
     fill="white"
     stroke="#ad1457"
-    stroke-width="15"
+    stroke-width="12"
     stroke-linejoin="round"
-    d="
-      M 0 57.735
-      L 50 28.868
-      L 50 -28.868
-      L 0 -57.735
-      L -50 -28.868
-      L -50 28.868
-      z
-    "
+    cx="0"
+    cy="-50"
+    r="50"
   />
 
   <!-- eyes -->
-  <circle cx="-20" cy="-5" r="10" fill="#ad1457" />
-  <circle cx="20" cy="-5" r="10" fill="#ad1457" />
+  <circle cx="-20" cy="-55" r="10" fill="#ad1457" />
+  <circle cx="20" cy="-55" r="10" fill="#ad1457" />
 </svg>
