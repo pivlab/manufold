@@ -3,7 +3,7 @@
   <path
     id="pen"
     fill="#cbd5e1"
-    stroke="#94a3b8"
+    stroke="#cbd5e1"
     stroke-width="12"
     stroke-linejoin="round"
     stroke-linecap="round"
@@ -18,30 +18,15 @@
     "
   />
 
-  <!-- pen shadow -->
-  <filter id="shadow" x="-100%" y="-100%" width="300%" height="300%">
-    <feDropShadow
-      in="SourceGraphic"
-      dx="0"
-      dy="10"
-      stdDeviation="0"
-      flood-color="#94a3b8"
-    />
-  </filter>
-  <mask id="clip" x="-100%" y="-100%" width="300%" height="300%">
-    <use href="#pen" />
-  </mask>
-  <use href="#face" filter="url(#shadow)" mask="url(#clip)" />
-
   <!-- pen divot -->
-  <circle cx="0" cy="45" r="12" fill="#ad1457" />
+  <circle cx="0" cy="40" r="12" fill="#ad1457" />
   <path
     fill="none"
     stroke="#ad1457"
     stroke-width="12"
     stroke-linecap="round"
     d="
-      M 0 45
+      M 0 40
       L 0 110
     "
   />
