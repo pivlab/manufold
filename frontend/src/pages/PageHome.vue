@@ -9,6 +9,7 @@ import {
   Code,
   Download,
   Feather,
+  FileArchive,
   FileImage,
   FileStack,
   GitFork,
@@ -33,7 +34,7 @@ import { toast } from "@/components/AppToasts";
 import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import outputStyles from "@/output.css?inline";
-import { downloadHtml, downloadMd } from "@/util/download";
+import { downloadHtml, downloadMd, downloadZip } from "@/util/download";
 import { hash, selectElementText } from "@/util/misc";
 import {
   imageAccepts,
@@ -335,6 +336,24 @@ const savePdf = async () => {
   outputElement.value?.element?.contentWindow?.print();
 };
 
+/** save output as zip */
+const saveZip = () => {
+  downloadZip(
+    sections.value
+      .map((section) => ({
+        filename: section.name + ".md",
+        data: section.content,
+      }))
+      .concat(
+        figures.value.map((figure) => ({
+          filename: figure.name + figure.extension,
+          data: figure.uri,
+        })),
+      ),
+    nameFallback.value,
+  );
+};
+
 /** intercept ctrl + p */
 useEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === "p") {
@@ -412,7 +431,7 @@ watch(
 
 <template>
   <header
-    class="bg-secondary flex flex-wrap items-center justify-between gap-4 p-4"
+    class="bg-secondary flex flex-wrap items-center justify-between gap-4 p-2"
   >
     <!-- header left -->
     <div>
@@ -505,6 +524,13 @@ watch(
               @click="savePdf"
             >
               <Printer />
+            </AppButton>
+            <AppButton
+              v-tooltip="'Save all sections and figures'"
+              v-close-popper
+              @click="saveZip"
+            >
+              <FileArchive />
             </AppButton>
           </div>
         </template>

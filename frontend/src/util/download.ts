@@ -1,3 +1,10 @@
+import {
+  BlobWriter,
+  Data64URIReader,
+  TextReader,
+  ZipWriter,
+} from "@zip.js/zip.js";
+
 /** download url as file */
 const download = (
   /** url to download */
@@ -36,3 +43,25 @@ export const downloadMd = (data: string, filename: string) =>
 /** download string as html file */
 export const downloadHtml = (data: string, filename: string) =>
   download(getUrl(data, "text/html;charset=utf-8"), filename, "html");
+
+/** download multiple files as zip */
+export const downloadZip = async (
+  files: { filename: string; data: string }[],
+  filename: string,
+) => {
+  const zipWriter = new ZipWriter(new BlobWriter("application/zip"));
+  await Promise.all(
+    files.map(({ data, filename }) =>
+      zipWriter.add(
+        filename,
+        data.startsWith("data:")
+          ? new Data64URIReader(data)
+          : new TextReader(data),
+      ),
+    ),
+  );
+  const blob = await zipWriter.close();
+  const url = window.URL.createObjectURL(blob);
+  download(url, filename, "zip");
+  window.URL.revokeObjectURL(url);
+};
