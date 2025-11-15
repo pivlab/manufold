@@ -6,7 +6,7 @@ type Props = {
   title: string;
   styles: string;
   body: string;
-  modify?: (html: Document) => Document;
+  modify?: (html: Document) => string;
 };
 
 const { title, styles, body, modify = undefined } = defineProps<Props>();
@@ -50,7 +50,7 @@ const modifiedSrc = computed(() => {
   if (!modify) return debouncedSrc.value;
   const parser = new DOMParser();
   const document = parser.parseFromString(debouncedSrc.value, "text/html");
-  return modify(document).documentElement.outerHTML;
+  return modify(document);
 });
 
 defineExpose({ element, src: modifiedSrc });

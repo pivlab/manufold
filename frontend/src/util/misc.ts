@@ -19,3 +19,20 @@ export const selectElementText = (element: HTMLElement) => {
   selection?.removeAllRanges();
   selection?.addRange(range);
 };
+
+/** wait for function to return something, checking periodically */
+export const waitFor = async <Result>(
+  func: () => Promise<Result> | Result,
+): Promise<Result | undefined> => {
+  /** retries with backoff */
+  const waits = [50, 100, 500, 1000, 2000, 3000, 4000, 5000];
+  while (waits.length) {
+    try {
+      const result = await func();
+      if (result) return result;
+    } catch (error) {
+      console.debug(error);
+    }
+    await sleep(waits.shift());
+  }
+};

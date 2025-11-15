@@ -3,7 +3,7 @@ import type { Event } from "adk-typescript/events";
 import type { Session, SessionOptions } from "adk-typescript/sessions";
 import { startCase } from "lodash";
 import { api, request, sseRequest } from "@/api";
-import { sleep } from "@/util/misc";
+import { waitFor } from "@/util/misc";
 
 /** session params */
 const app = "ai_science_writer";
@@ -33,17 +33,9 @@ export const getSession = async () => {
       body: JSON.stringify(payload),
     };
 
-    /** retries with backoff */
-    const waits = [100, 500, 1000, 2000, 3000, 4000, 5000];
-    for (const wait of waits) {
-      try {
-        /** create new session */
-        return await request<Session>(sessionApi, options);
-      } catch (error) {
-        console.warn(error);
-        await sleep(wait);
-      }
-    }
+    /** create new session */
+    const session = await waitFor(() => request<Session>(sessionApi, options));
+    if (session) return session;
     throw Error("Couldn't create session after several tries");
   }
 };

@@ -35,7 +35,7 @@ import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import outputStyles from "@/output.css?inline";
 import { downloadHtml, downloadMd, downloadZip } from "@/util/download";
-import { hash, selectElementText } from "@/util/misc";
+import { hash, selectElementText, waitFor } from "@/util/misc";
 import {
   imageAccepts,
   imageExtensions,
@@ -95,40 +95,40 @@ const name = useStorage("name", "");
 /** document name, with fallback */
 const nameFallback = computed(() => name.value.trim() || "manuscript");
 
-/** current section */
-const sections = useStorage<{ name: string; content: string }[]>("section", [
+/** current sections input */
+const sections = useStorage<{ name: string; content: string }[]>("sections", [
   { name: "Section", content: "" },
 ]);
 
-/** current tab */
+/** current tab index */
 const tab = useStorage("tab", 0);
 
 /** add new section tab */
-const addInput = () => sections.value.push({ name: "Section", content: "" });
+const addSection = () => sections.value.push({ name: "Section", content: "" });
 
 /** delete section tab */
-const deleteInput = (index: number) => {
+const deleteSection = (index: number) => {
   if (!window.confirm("Delete this section? No undo!")) return;
   sections.value.splice(index, 1);
 };
 
 /** reorder section tabs */
-const reorderInputs = (from: number, to: number) => {
+const reorderSections = (from: number, to: number) => {
   const moved = sections.value.splice(from, 1)[0];
   if (moved) sections.value.splice(to, 0, moved);
 };
 
 /** rename section tab */
-const renameInputs = (index: number, name: string) => {
+const renameSections = (index: number, name: string) => {
   if (sections.value[index]) sections.value[index].name = name;
 };
 
 /** whether output all sections together */
-const combineInput = useStorage("combine-input", false);
+const combineSections = useStorage("combine", true);
 
 /** output markdown */
 const output = computed(() =>
-  (combineInput.value ? sections.value : [sections.value[tab.value]])
+  (combineSections.value ? sections.value : [sections.value[tab.value]])
     .filter((section) => section !== undefined)
     .map((section) => section.content)
     .join("\n\n"),
@@ -139,14 +139,25 @@ const outputHtml = computed(() => micromark(output.value));
 
 /** modify output html  */
 const modifyHtml = (document: Document) => {
+  /** add heading ids */
   for (const heading of document.querySelectorAll("h1, h2, h3, h4, h5, h6"))
     heading.id = kebabCase(heading.textContent?.trim());
 
-  return document;
+  /** stringify */
+  let html = document.documentElement.outerHTML;
+
+  /** add figure uris */
+  for (const figure of figures.value) {
+    const find = `@fig:${kebabCase(figure.name)}`;
+    const replace = `<img src="${figure.uri}" alt="${figure.name}" />`;
+    html = html.replace(new RegExp(find, "g"), replace);
+  }
+
+  return html;
 };
 
-/** upload section file */
-const uploadInput = async (files: Upload[]) => {
+/** upload section files */
+const uploadSections = async (files: Upload[]) => {
   for (const file of files)
     sections.value.push({ name: file.name, content: file.data });
   await nextTick();
@@ -365,7 +376,7 @@ useEventListener("keydown", (event) => {
 type Figure = Upload & Partial<Awaited<ReturnType<typeof uploadArtifact>>>;
 
 /** attached figures */
-const figures = ref<Figure[]>([]);
+const figures = useStorage<Figure[]>("figures", []);
 
 /** show figures */
 const showFigures = ref(false);
@@ -375,6 +386,8 @@ const figureCache = new Map<number, Figure>();
 watch(
   figures,
   async () => {
+    await waitFor(() => session.value);
+
     if (!session.value) {
       toast("No AI service session", "error");
       return;
@@ -425,7 +438,7 @@ watch(
 
     stopThinking();
   },
-  { deep: true },
+  { immediate: true, deep: true },
 );
 </script>
 
@@ -440,7 +453,7 @@ watch(
         :accept="textAccepts.concat(textExtensions)"
         :drop-zone="inputElement"
         :disabled="running"
-        @files="uploadInput"
+        @files="uploadSections"
       >
         <ArrowUp />
       </AppUpload>
@@ -497,10 +510,12 @@ watch(
     <div>
       <AppButton
         v-tooltip="
-          combineInput ? 'Show selected section' : 'Show combined sections'
+          combineSections
+            ? 'Show only selected section'
+            : 'Show all sections combined'
         "
-        :design="combineInput ? 'active' : undefined"
-        @click="combineInput = !combineInput"
+        :design="combineSections ? 'active' : undefined"
+        @click="combineSections = !combineSections"
       >
         <FileStack />
       </AppButton>
@@ -625,10 +640,10 @@ watch(
       <AppTabs
         v-model="tab"
         :tabs="sections.map(({ name }) => ({ name }))"
-        @add="addInput"
-        @close="deleteInput"
-        @reorder="reorderInputs"
-        @rename="renameInputs"
+        @add="addSection"
+        @close="deleteSection"
+        @reorder="reorderSections"
+        @rename="renameSections"
       >
         <template v-for="(_, index) in sections" :key="index" #[index]>
           <!-- text section -->
