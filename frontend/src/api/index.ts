@@ -8,7 +8,7 @@ export const api = import.meta.env.VITE_API;
 export const request = async <Response>(
   url: string | URL,
   options: RequestInit = {},
-) => {
+): Promise<Response> => {
   /** normalize url to url object */
   url = new URL(url);
 
@@ -22,7 +22,7 @@ export const request = async <Response>(
   if (!response.ok) throw Error(response.statusText);
 
   /** try to parse as json */
-  let parsed: Response | undefined = undefined;
+  let parsed: Response;
   try {
     parsed = await response.clone().json();
   } catch (error) {

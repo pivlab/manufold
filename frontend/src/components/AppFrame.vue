@@ -1,20 +1,18 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef, watch } from "vue";
-import { useDebounce } from "@vueuse/core";
 
 type Props = {
   title: string;
   styles: string;
   body: string;
-  modify?: (html: Document) => string;
 };
 
-const { title, styles, body, modify = undefined } = defineProps<Props>();
+const { title, styles, body } = defineProps<Props>();
 
 const element = useTemplateRef("element");
 
 /** html src */
-const rawSrc = computed(
+const src = computed(
   () => `
 <!DOCTYPE html>
 <html lang="en">
@@ -29,33 +27,19 @@ const rawSrc = computed(
 `,
 );
 
-/** throttle updates */
-const debouncedSrc = useDebounce(rawSrc, 100, { maxWait: 500 });
-
 /** scroll y */
 const scroll = ref(0);
 
 /** save scroll */
-watch(
-  debouncedSrc,
-  () => (scroll.value = element.value?.contentWindow?.scrollY || 0),
-);
+watch(src, () => (scroll.value = element.value?.contentWindow?.scrollY || 0));
 
 /** restore scroll */
 const restoreScroll = () =>
   element.value?.contentWindow?.scrollTo(0, scroll.value);
 
-/** run parsed src through provided func */
-const modifiedSrc = computed(() => {
-  if (!modify) return debouncedSrc.value;
-  const parser = new DOMParser();
-  const document = parser.parseFromString(debouncedSrc.value, "text/html");
-  return modify(document);
-});
-
-defineExpose({ element, src: modifiedSrc });
+defineExpose({ element, src });
 </script>
 
 <template>
-  <iframe ref="element" :srcdoc="modifiedSrc" @load="restoreScroll" />
+  <iframe ref="element" :srcdoc="src" @load="restoreScroll" />
 </template>

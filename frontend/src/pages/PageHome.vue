@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
 import draggable from "vuedraggable";
-import { useEventListener, useStorage } from "@vueuse/core";
+import { useDebounce, useEventListener, useStorage } from "@vueuse/core";
 import { isEqual, kebabCase } from "lodash";
 import {
   Upload as ArrowUp,
@@ -22,9 +22,14 @@ import {
   Trash,
   Type,
 } from "lucide-vue-next";
-import { micromark } from "micromark";
-import { aiScienceWriter, getSession, uploadArtifact } from "@/api/api";
+import {
+  aiScienceWriter,
+  getSession,
+  manubotCite,
+  uploadArtifact,
+} from "@/api/api";
 import type { Session } from "@/api/api";
+import type { Cite } from "@/api/manubot";
 import logo from "@/assets/logo.svg";
 import AppBrain, { think } from "@/components/AppBrain.vue";
 import AppButton from "@/components/AppButton.vue";
@@ -35,7 +40,9 @@ import AppUpload from "@/components/AppUpload.vue";
 import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import outputStyles from "@/output.css?inline";
 import { downloadHtml, downloadMd, downloadZip } from "@/util/download";
+import { render } from "@/util/markdown";
 import { hash, selectElementText, waitFor } from "@/util/misc";
+import { replaceRegex } from "@/util/string";
 import {
   imageAccepts,
   imageExtensions,
@@ -44,6 +51,7 @@ import {
   textExtensions,
   type Upload,
 } from "@/util/upload";
+import devTest from "./dev-test.md?raw";
 import example1Fig1 from "./example-1-figure-1.png?arraybuffer";
 import example1Fig2 from "./example-1-figure-2.png?arraybuffer";
 import example1Fig3 from "./example-1-figure-3.png?arraybuffer";
@@ -127,18 +135,77 @@ const renameSections = (index: number, name: string) => {
 const combineSections = useStorage("combine", true);
 
 /** output markdown */
-const output = computed(() =>
-  (combineSections.value ? sections.value : [sections.value[tab.value]])
-    .filter((section) => section !== undefined)
-    .map((section) => section.content)
-    .join("\n\n"),
+const output = useDebounce(
+  computed(() =>
+    (combineSections.value ? sections.value : [sections.value[tab.value]])
+      .filter((section) => section !== undefined)
+      .map((section) => section.content)
+      .join("\n\n"),
+  ),
+  100,
+  { maxWait: 500 },
+);
+
+/** citation details */
+const citations = ref<Cite[]>([]);
+
+watch(
+  output,
+  async () => {
+    const { update } = toast("Getting citations", "loading", "citations");
+    try {
+      console.log("hjo");
+      const citations = await manubotCite(
+        Array.from(output.value.matchAll(/\[@([\S]+:[\S]+)\]/dgm))
+          .map((match) => match[1])
+          .filter((match) => match !== undefined),
+      );
+      update("Got citations", "success");
+      return citations;
+    } catch (error) {
+      console.warn(error);
+      update("Error getting citations", "error");
+      return [];
+    }
+  },
+  { immediate: true },
 );
 
 /** output markdown converted to html */
-const outputHtml = computed(() => micromark(output.value));
+const renderedOutput = computed(() => {
+  let markdown = output.value;
 
-/** modify output html  */
-const modifyHtml = (document: Document) => {
+  /** add citations */
+  if (citations.value?.length) {
+    /** citation lines */
+    const citationLines = citations.value
+      .map(({ id, title, author, publisher, issued }) => [
+        `1. **${title || "???"}**`,
+        (author ?? [])
+          .map(({ given, family }) => [given, family].join(" "))
+          .join(", "),
+        [publisher, (issued?.["date-parts"]?.[0] ?? []).join("-"), id]
+          .flat()
+          .filter((part) => part?.trim())
+          .join(" | "),
+      ])
+      .flat()
+      .filter((part) => part?.trim())
+      .map((line, index, array) =>
+        [
+          index > 0 ? "  " : "",
+          line,
+          index < array.length - 1 ? "  " : "",
+        ].join(""),
+      );
+
+    /** add citations section to end */
+    markdown += ["# Citations", "", ...citationLines].join("\n");
+  }
+
+  /** convert markdown to html document */
+  const document = render(markdown);
+
   /** add heading ids */
   for (const heading of document.querySelectorAll("h1, h2, h3, h4, h5, h6"))
     heading.id = kebabCase(heading.textContent?.trim());
@@ -147,14 +214,18 @@ const modifyHtml = (document: Document) => {
   let html = document.documentElement.outerHTML;
 
   /** add figure uris */
-  for (const figure of figures.value) {
-    const find = `@fig:${kebabCase(figure.name)}`;
-    const replace = `<img src="${figure.uri}" alt="${figure.name}" />`;
-    html = html.replace(new RegExp(find, "g"), replace);
-  }
+  html = replaceRegex(html, /@fig:([\p{L}\p{N}-]+)/dmu, (match) => {
+    const name = match[1];
+    if (!name) return null;
+    const figure = figures.value.find(
+      (figure) => kebabCase(figure.name) === name,
+    );
+    if (!figure) return null;
+    return `<img src="${figure.uri}" alt="${figure.name}" />`;
+  });
 
   return html;
-};
+});
 
 /** upload section files */
 const uploadSections = async (files: Upload[]) => {
@@ -166,6 +237,11 @@ const uploadSections = async (files: Upload[]) => {
 };
 
 const examples = {
+  Blank: {
+    name: "New Manuscript",
+    sections: [{ data: "", name: "Section", type: "text/markdown" }],
+    figures: [],
+  },
   "Draft from skeleton w/ figs": {
     name: "Example Manuscript",
     sections: example1
@@ -187,6 +263,15 @@ const examples = {
     name: "Example Manuscript",
     sections: [{ data: example2, name: "Example", type: "text/markdown" }],
     figures: [],
+  },
+  "Dev Test": {
+    name: "Dev Test",
+    sections: [{ data: devTest, name: "Example", type: "text/markdown" }],
+    figures: [
+      { data: example1Fig1, filename: "fig-1.png", type: "image/png" },
+      { data: example1Fig2, filename: "fig-2.png", type: "image/png" },
+      { data: example1Fig3, filename: "fig-3.png", type: "image/png" },
+    ],
   },
 };
 
@@ -338,8 +423,9 @@ const saveMd = () => downloadMd(output.value, nameFallback.value);
 
 /** save output as html */
 const saveHtml = () => {
-  if (outputElement.value)
-    downloadHtml(outputElement.value.src, nameFallback.value);
+  if (!outputElement.value) return;
+  if (!outputElement.value.src) return;
+  downloadHtml(outputElement.value.src, nameFallback.value);
 };
 
 /** print output as pdf */
@@ -687,8 +773,7 @@ watch(
       ref="outputElement"
       :title="nameFallback"
       :styles="outputStyles"
-      :body="outputHtml"
-      :modify="modifyHtml"
+      :body="renderedOutput"
       class="min-w-0 flex-grow border-l border-slate-300"
     />
   </main>

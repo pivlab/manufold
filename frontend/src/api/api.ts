@@ -1,8 +1,9 @@
 /** https://github.com/google/adk-docs/issues/63 */
 import type { Event } from "adk-typescript/events";
 import type { Session, SessionOptions } from "adk-typescript/sessions";
-import { startCase } from "lodash";
+import { startCase, uniq } from "lodash";
 import { api, request, sseRequest } from "@/api";
+import type { Cite } from "@/api/manubot";
 import { waitFor } from "@/util/misc";
 
 /** session params */
@@ -141,3 +142,33 @@ export const uploadArtifact = async (
 };
 
 export type { Session };
+
+const citationCache: Record<string, Cite> = {};
+
+/** manubot cite */
+export const manubotCite = async (ids: string[]) => {
+  /** de-dupe */
+  ids = uniq(ids);
+  /** ids not already cited */
+  const newIds = ids.filter((id) => !citationCache[id]);
+  /** request url */
+  const url = "https://manubot-api.cu-dbmi.dev/cite";
+  /** request options */
+  const options = {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: newIds }),
+  };
+
+  /** request response */
+  const citations = await request<Cite[]>(url, options);
+
+  /** add each citation to cache */
+  citations.forEach((citation, index) => {
+    const id = newIds[index];
+    if (!id) return;
+    citationCache[id] = citation;
+  });
+
+  return ids.map((id) => ({ ...citationCache[id], id }));
+};
