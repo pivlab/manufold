@@ -154,14 +154,12 @@ watch(
   async () => {
     const { update } = toast("Getting citations", "loading", "citations");
     try {
-      console.log("hjo");
-      const citations = await manubotCite(
+      citations.value = await manubotCite(
         Array.from(output.value.matchAll(/\[@([\S]+:[\S]+)\]/dgm))
           .map((match) => match[1])
           .filter((match) => match !== undefined),
       );
       update("Got citations", "success");
-      return citations;
     } catch (error) {
       console.warn(error);
       update("Error getting citations", "error");
@@ -175,10 +173,10 @@ watch(
 const renderedOutput = computed(() => {
   let markdown = output.value;
 
-  /** add citations */
+  /** add bibliography */
   if (citations.value?.length) {
-    /** citation lines */
-    const citationLines = citations.value
+    /** lines */
+    const bibliography = citations.value
       .map(({ id, title, author, publisher, issued }) => [
         `1. **${title || "???"}**`,
         (author ?? [])
@@ -199,8 +197,8 @@ const renderedOutput = computed(() => {
         ].join(""),
       );
 
-    /** add citations section to end */
-    markdown += ["# Citations", "", ...citationLines].join("\n");
+    /** add section to end */
+    markdown += ["# Bibliography", "", ...bibliography].join("\n");
   }
 
   /** convert markdown to html document */
