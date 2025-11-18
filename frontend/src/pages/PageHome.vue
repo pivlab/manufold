@@ -551,7 +551,7 @@ watch(
         <div
           v-if="figures.length"
           class="absolute text-xs text-primary"
-          :class="showFigures ? 'top-2 right-2' : '-top-1 -right-1'"
+          :class="showFigures ? '-top-2 -right-2' : '-top-1 -right-1'"
         >
           {{ figures.length }}
         </div>
