@@ -77,3 +77,8 @@ pre:has(code) {
 hr {
   @apply my-4 h-[2px] border-none bg-slate-200;
 }
+
+th,
+td {
+  @apply border-b border-slate-300 px-2 py-1;
+}
