@@ -151,24 +151,30 @@ export const manubotCite = async (ids: string[]) => {
   ids = uniq(ids);
   /** ids not already cited */
   const newIds = ids.filter((id) => !citationCache[id]);
-  /** request url */
-  const url = "https://manubot-api.cu-dbmi.dev/cite";
-  /** request options */
-  const options = {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ ids: newIds }),
-  };
 
-  /** request response */
-  const citations = await request<Cite[]>(url, options);
+  if (newIds.length) {
+    /** request url */
+    const url = "https://manubot-api.cu-dbmi.dev/cite";
+    /** request options */
+    const options = {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ids: newIds }),
+    };
 
-  /** add each citation to cache */
-  citations.forEach((citation, index) => {
-    const id = newIds[index];
-    if (!id) return;
-    citationCache[id] = citation;
-  });
+    /** request response */
+    const citations = await request<Cite[]>(url, options);
+
+    /** add each citation to cache */
+    citations.forEach((citation, index) => {
+      const id = newIds[index];
+      if (!id) return;
+      citationCache[id] = citation;
+    });
+  }
 
   return ids.map((id) => ({ ...citationCache[id], id }));
 };
