@@ -48,8 +48,11 @@ textarea {
 }
 
 .lucide {
-  width: unset;
-  height: 1em;
+  @apply h-[1em] w-[unset];
+}
+
+body.v-popper--some-open--dropdown iframe {
+  @apply pointer-events-none;
 }
 
 .v-popper--theme-tooltip,
