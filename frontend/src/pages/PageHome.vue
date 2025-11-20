@@ -152,10 +152,16 @@ const citations = ref<Cite[]>([]);
 watch(
   output,
   async () => {
-    const ids = Array.from(output.value.matchAll(/\[@([\S]+:[\S]+)\]/dgm))
-      .map((match) => match[1])
-      .filter((match) => match !== undefined);
-    if (!ids.length) return;
+    /** parse citation ids */
+    const ids = Array.from(output.value.matchAll(/\[(\s*@.*?)\]/gm))
+      .map((match) =>
+        Array.from(match[1]?.matchAll(/@([^\s;]+:[^\s;]+)/gm) ?? []).map(
+          (match) => match[1],
+        ),
+      )
+      .flat()
+      .filter((id) => id !== undefined);
+
     const { update } = toast(
       `Getting ${ids.length.toLocaleString()} citations`,
       "loading",
