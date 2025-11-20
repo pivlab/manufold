@@ -152,13 +152,17 @@ const citations = ref<Cite[]>([]);
 watch(
   output,
   async () => {
-    const { update } = toast("Getting citations", "loading", "citations");
+    const ids = Array.from(output.value.matchAll(/\[@([\S]+:[\S]+)\]/dgm))
+      .map((match) => match[1])
+      .filter((match) => match !== undefined);
+    if (!ids.length) return;
+    const { update } = toast(
+      `Getting ${ids.length.toLocaleString()} citations`,
+      "loading",
+      "citations",
+    );
     try {
-      citations.value = await manubotCite(
-        Array.from(output.value.matchAll(/\[@([\S]+:[\S]+)\]/dgm))
-          .map((match) => match[1])
-          .filter((match) => match !== undefined),
-      );
+      citations.value = await manubotCite(ids);
       update("Got citations", "success");
     } catch (error) {
       console.warn(error);
@@ -550,7 +554,7 @@ watch(
         <FileImage />
         <div
           v-if="figures.length"
-          class="absolute text-xs text-primary"
+          class="text-primary absolute text-xs"
           :class="showFigures ? '-top-2 -right-2' : '-top-1 -right-1'"
         >
           {{ figures.length }}
