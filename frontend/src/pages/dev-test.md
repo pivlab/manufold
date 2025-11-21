@@ -1,12 +1,4 @@
-@fig:fig-1
-
-@fig:fig-2
-
-@fig:fig-3
-
-Citation by DOI [@doi:10.7554/eLife.32822].
-
-Citation by PubMed Central ID [@pmc:PMC6103790].
+Citation by common IDs [@doi:10.7554/eLife.32822;@pmc:PMC6103790].
 
 Citation by URL [@url:https://greenelab.github.io/meta-review].
 

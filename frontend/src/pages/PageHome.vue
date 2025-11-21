@@ -42,7 +42,7 @@ import outputStyles from "@/output.css?inline";
 import { downloadHtml, downloadMd, downloadZip } from "@/util/download";
 import { render } from "@/util/markdown";
 import { selectElementText, waitFor } from "@/util/misc";
-import { replaceRegex } from "@/util/string";
+import { splice } from "@/util/string";
 import {
   imageAccepts,
   imageExtensions,
@@ -142,8 +142,8 @@ const output = useDebounce(
       .map((section) => section.content)
       .join("\n\n"),
   ),
-  100,
-  { maxWait: 500 },
+  500,
+  { maxWait: 1000 },
 );
 
 /** citation details */
@@ -152,6 +152,11 @@ const citations = ref<Cite[]>([]);
 /** symbol to de-dupe requests */
 let latestCitations: symbol;
 
+/** match citation group */
+const citationGroup = String.raw`\s*\[\s*@.*?\]\s*`;
+/** match citation id */
+const citationId = String.raw`@[^\s;]+:[^\s;\]]+`;
+
 watch(
   output,
   async () => {
@@ -159,14 +164,10 @@ watch(
     const current = (latestCitations = Symbol());
 
     /** parse citation ids */
-    const ids = Array.from(output.value.matchAll(/\[(\s*@.*?)\]/gm))
-      .map((match) =>
-        Array.from(match[1]?.matchAll(/@([^\s;]+:[^\s;]+)/gm) ?? []).map(
-          (match) => match[1],
-        ),
-      )
-      .flat()
-      .filter((id) => id !== undefined);
+    const ids: string[] = [];
+    for (const group of output.value.matchAll(new RegExp(citationGroup, "gm")))
+      for (const id of group[0].matchAll(new RegExp(citationId, "gm")))
+        ids.push(id[0].substring(1));
 
     const { update, close } = toast(
       `Getting ${ids.length.toLocaleString()} citations`,
@@ -236,16 +237,33 @@ const renderedOutput = computed(() => {
   /** stringify */
   let html = document.documentElement.outerHTML;
 
-  /** add figure uris */
-  html = replaceRegex(html, /@fig:([\p{L}\p{N}-]+)/dmu, (match) => {
-    const name = match[1];
-    if (!name) return null;
-    const figure = figures.value.find(
-      (figure) => kebabCase(figure.name) === name,
-    );
-    if (!figure) return null;
-    return `<img src="${figure.uri}" alt="${figure.name}" />`;
-  });
+  /** add citation bibliography numbers */
+  let groupMatch: RegExpMatchArray | null;
+  while ((groupMatch = html.match(new RegExp(citationGroup, "dm")))) {
+    /** get group props */
+    const [groupStart, groupEnd] = groupMatch.indices?.[0] ?? [];
+    if (!groupStart || !groupEnd) continue;
+    let groupText = groupMatch[0];
+
+    /** superscript numbers */
+    const numbers: number[] = [];
+
+    /** for each id in group */
+    for (const idMatch of groupText.matchAll(new RegExp(citationId, "gm")))
+      numbers.push(
+        citations.value.findIndex(({ id }) => id === idMatch[0].substring(1)) +
+          1,
+      );
+
+    /** replace group */
+    groupText = `<sup>${numbers.join(",")}</sup>`;
+
+    /** replace citation group */
+    html = splice(html, groupStart, groupEnd, groupText);
+
+    /** infinite loop protection */
+    if (html === document.documentElement.outerHTML) break;
+  }
 
   return html;
 });
