@@ -4,11 +4,11 @@ import { computed, ref, useTemplateRef, watch } from "vue";
 type Props = {
   title: string;
   styles: string;
+  stylesheets: string[];
   body: string;
 };
 
-const { title, styles, body } = defineProps<Props>();
-
+const { title, styles, stylesheets, body } = defineProps<Props>();
 const element = useTemplateRef("element");
 
 /** html src */
@@ -21,6 +21,7 @@ const src = computed(
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${title}</title>
     <style>${styles}</style>
+    ${stylesheets.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n")}
   </head>
   <body>${body}</body>
 </html>

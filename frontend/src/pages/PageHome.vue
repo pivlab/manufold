@@ -265,6 +265,10 @@ const renderedOutput = computed(() => {
     if (html === document.documentElement.outerHTML) break;
   }
 
+  /** replace figure uris */
+  for (const { name, extension, uri } of figures.value)
+    html = html.replaceAll(name + extension, uri);
+
   return html;
 });
 
@@ -812,6 +816,9 @@ watch(
       ref="outputElement"
       :title="nameFallback"
       :styles="outputStyles"
+      :stylesheets="[
+        'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css',
+      ]"
       :body="renderedOutput"
       class="min-w-0 flex-grow border-l border-slate-300"
     />
