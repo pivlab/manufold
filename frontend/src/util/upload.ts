@@ -1,4 +1,3 @@
-import { uniqueId } from "lodash";
 import {
   Image,
   ImagePlay,
@@ -11,6 +10,7 @@ import {
 import { extractRawText } from "mammoth";
 import * as pdfjs from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker?url";
+import { hash } from "@/util/misc";
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
@@ -107,7 +107,7 @@ export const parseFile = async (file: File) => {
   }
 
   return {
-    id: uniqueId(),
+    hash: hash([name, data].join("|")),
     filename: file.name,
     type: file.type,
     data,

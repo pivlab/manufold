@@ -41,7 +41,7 @@ import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import outputStyles from "@/output.css?inline";
 import { downloadHtml, downloadMd, downloadZip } from "@/util/download";
 import { render } from "@/util/markdown";
-import { hash, selectElementText, waitFor } from "@/util/misc";
+import { selectElementText, waitFor } from "@/util/misc";
 import { replaceRegex } from "@/util/string";
 import {
   imageAccepts,
@@ -149,9 +149,15 @@ const output = useDebounce(
 /** citation details */
 const citations = ref<Cite[]>([]);
 
+/** symbol to de-dupe requests */
+let latestCitations: symbol;
+
 watch(
   output,
   async () => {
+    /** mark this request as latest */
+    const current = (latestCitations = Symbol());
+
     /** parse citation ids */
     const ids = Array.from(output.value.matchAll(/\[(\s*@.*?)\]/gm))
       .map((match) =>
@@ -162,18 +168,27 @@ watch(
       .flat()
       .filter((id) => id !== undefined);
 
-    const { update } = toast(
+    const { update, close } = toast(
       `Getting ${ids.length.toLocaleString()} citations`,
       "loading",
       "citations",
     );
     try {
-      citations.value = await manubotCite(ids);
-      update("Got citations", "success");
+      /** request */
+      const results = await manubotCite(ids);
+
+      /** if this request not latest, ignore results */
+      if (current !== latestCitations) return;
+
+      /** avoid infinite updates */
+      if (!isEqual(citations.value, results)) {
+        /** set results */
+        citations.value = results;
+        update("Got citations", "success");
+      } else close();
     } catch (error) {
       console.warn(error);
       update("Error getting citations", "error");
-      return [];
     }
   },
   { immediate: true },
@@ -475,11 +490,15 @@ const figures = useStorage<Figure[]>("figures", []);
 /** show figures */
 const showFigures = ref(false);
 
-const figureCache = new Map<number, Figure>();
+/** symbol to de-dupe requests */
+let latestFigures: symbol;
 
 watch(
   figures,
   async () => {
+    /** mark this request as latest */
+    const current = (latestFigures = Symbol());
+
     await waitFor(() => session.value);
 
     if (!session.value) {
@@ -491,16 +510,10 @@ watch(
     const { update, close } = toast("Updating figures", "loading", "figures");
 
     try {
+      /** requests */
       const newFigures = await Promise.all(
         figures.value.map(async (figure) => {
           if (!session.value) throw Error("No session");
-
-          /** id for figure from unique name/contents */
-          const id = hash([figure.name, figure.data].join("|"));
-
-          /** skip if already uploaded */
-          const cached = figureCache.get(id);
-          if (cached) return cached;
 
           /** send figure to ai service */
           const result = await uploadArtifact(
@@ -508,20 +521,20 @@ watch(
             figure.name,
             figure.data,
             figure.type,
+            figure.hash,
           );
 
           /** combine result with existing figure info */
-          const newFigure = { ...figure, ...result };
-
-          /** update cache */
-          figureCache.set(id, newFigure);
-
-          return newFigure;
+          return { ...figure, ...result };
         }),
       );
 
+      /** if this request not latest, ignore results */
+      if (current !== latestFigures) return;
+
       /** avoid infinite updates */
       if (!isEqual(figures.value, newFigures)) {
+        /** set results */
         figures.value = newFigures;
         update("Updated figures", "success");
       } else close();

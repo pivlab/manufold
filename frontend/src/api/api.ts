@@ -96,13 +96,25 @@ export const aiScienceWriter = async (
   return extractText(response);
 };
 
-/** send e.g. image backend */
+const uploadArtifactCache: Record<string, Artifact> = {};
+
+type Artifact = {
+  title: string;
+  description: string;
+  figure_number: number;
+};
+
+/** send e.g. image to backend */
 export const uploadArtifact = async (
   session: Session,
   name: string,
   data: string,
   type: string,
+  key: string | number,
 ) => {
+  /** retrieve from cache */
+  if (uploadArtifactCache[key]) return uploadArtifactCache[key];
+
   /** payload to provide backend */
   const payload = {
     appName: session.appName,
@@ -130,12 +142,11 @@ export const uploadArtifact = async (
 
   try {
     /** expect response to be stringified json describing artifact */
-    const { title, description, figure_number } = JSON.parse(text) as {
-      title: string;
-      description: string;
-      figure_number: number;
-    };
-    return { title, description, figure_number };
+    const { title, description, figure_number } = JSON.parse(text) as Artifact;
+    const result = { title, description, figure_number };
+    /** set cache */
+    uploadArtifactCache[key] = result;
+    return result;
   } catch (error) {
     throw Error("Couldn't parse artifact response");
   }
@@ -143,14 +154,14 @@ export const uploadArtifact = async (
 
 export type { Session };
 
-const citationCache: Record<string, Cite> = {};
+const manubotCiteCache: Record<string, Cite> = {};
 
 /** manubot cite */
 export const manubotCite = async (ids: string[]) => {
   /** de-dupe */
   ids = uniq(ids);
   /** ids not already cited */
-  const newIds = ids.filter((id) => !citationCache[id]);
+  const newIds = ids.filter((id) => !manubotCiteCache[id]);
 
   if (newIds.length) {
     /** request url */
@@ -172,9 +183,9 @@ export const manubotCite = async (ids: string[]) => {
     citations.forEach((citation, index) => {
       const id = newIds[index];
       if (!id) return;
-      citationCache[id] = citation;
+      manubotCiteCache[id] = citation;
     });
   }
 
-  return ids.map((id) => ({ ...citationCache[id], id }));
+  return ids.map((id) => ({ ...manubotCiteCache[id], id }));
 };
