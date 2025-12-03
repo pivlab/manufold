@@ -7,7 +7,7 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
 Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
----
+______________________________________________________________________
 
 **This is bold text**
 
@@ -76,5 +76,5 @@ const foo = (bar) => {
 Lift ($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
 
 $$
-L = \frac{1}{2} \rho v^2 S C_L
+L = \\frac{1}{2} \\rho v^2 S C_L
 $$
