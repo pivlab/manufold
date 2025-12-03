@@ -734,7 +734,16 @@ watch(
               />
             </div>
             <div class="flex items-center gap-2">
-              <input v-model="element.name" placeholder="Name" class="grow" />
+              <input
+                :model-value="element.name"
+                placeholder="Name"
+                class="grow"
+                @change="
+                  element.name = (
+                    $event.currentTarget as HTMLInputElement
+                  ).value
+                "
+              />
               <AppUploadBadge :upload="element" />
               <AppButton
                 v-tooltip="'Delete figure'"
