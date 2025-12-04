@@ -8,6 +8,7 @@ import pathlib
 import duckdb
 import numpy as np
 import pyarrow as pa
+from duckdb.typing import VARCHAR
 
 from manugen_ai.utils import download_file_if_not_available
 
@@ -275,9 +276,7 @@ def create_withdrarxiv_embeddings(
         """
     )
 
-    conn.create_function(
-        "embed", embed, [duckdb.sqltypes.VARCHAR], f"FLOAT[{get_embedding_size()}]"
-    )
+    conn.create_function("embed", embed, [VARCHAR], f"FLOAT[{get_embedding_size()}]")
 
     # Batch-compute embeddings for every abstract
     batch_size = 100
@@ -373,9 +372,7 @@ def search_withdrarxiv_embeddings(query: str, top_k: int = 2):
     )
 
     conn = duckdb.connect(target_db)
-    conn.create_function(
-        "embed", embed, [duckdb.sqltypes.VARCHAR], f"FLOAT[{get_embedding_size()}]"
-    )
+    conn.create_function("embed", embed, [VARCHAR], f"FLOAT[{get_embedding_size()}]")
 
     q = {"q": query, "k": top_k}
     df = (
