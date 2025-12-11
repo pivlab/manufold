@@ -46,6 +46,10 @@ a {
   @apply text-primary underline hover:text-black;
 }
 
+figure {
+  @apply flex flex-col items-start gap-2;
+}
+
 img {
   @apply max-h-50 max-w-100;
 }

@@ -1,13 +1,11 @@
-# Test
-
-## Basic formatting
+# Basic formatting
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
 Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-______________________________________________________________________
+---
 
 **This is bold text**
 
@@ -17,13 +15,13 @@ _This is italic text_
 
 [link](http://dev.nodeca.com)
 
-## Citations
+# Citations
 
 Citation by common IDs [@doi:10.7554/eLife.32822;@pmc:PMC6103790].
 
 Citation by URL [@url:https://greenelab.github.io/meta-review].
 
-## Figures
+# Figures
 
 ![](fig-1.png)
 
@@ -31,7 +29,7 @@ Citation by URL [@url:https://greenelab.github.io/meta-review].
 
 ![](fig-3.png)
 
-## Lists
+# Lists
 
 - Unordered list item 1
 - Unordered list item 2
@@ -45,7 +43,7 @@ Citation by URL [@url:https://greenelab.github.io/meta-review].
    a. Unordered list item 2b
 1. Unordered list item 3
 
-## Quotes
+# Quotes
 
 > Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 > Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
@@ -53,7 +51,7 @@ Citation by URL [@url:https://greenelab.github.io/meta-review].
 > > Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
 > > Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
-## Table
+# Table
 
 | Left           |     Center     |          Right |
 | :------------- | :------------: | -------------: |
@@ -61,7 +59,7 @@ Citation by URL [@url:https://greenelab.github.io/meta-review].
 | Dolor sit amet |  Lorem ipsum   | Dolor sit amet |
 | Lorem ipsum    | Dolor sit amet |    Lorem ipsum |
 
-## Code
+# Code
 
 Inline `code`.
 
@@ -71,7 +69,7 @@ const foo = (bar) => {
 };
 ```
 
-## Math
+# Math
 
 Lift ($L$) can be determined by Lift Coefficient ($C_L$) like the following equation.
 

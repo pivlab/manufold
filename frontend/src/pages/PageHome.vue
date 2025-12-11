@@ -37,7 +37,6 @@ import AppFrame from "@/components/AppFrame.vue";
 import AppTabs from "@/components/AppTabs.vue";
 import { toast } from "@/components/AppToasts";
 import AppUpload from "@/components/AppUpload.vue";
-import AppUploadBadge from "@/components/AppUploadBadge.vue";
 import outputStyles from "@/output.css?inline";
 import { downloadHtml, downloadMd, downloadZip } from "@/util/download";
 import { render } from "@/util/markdown";
@@ -77,8 +76,7 @@ onMounted(async () => {
 
 /** elements */
 const figureElement = useTemplateRef("figureElement");
-// @ts-expect-error typing doesn't support dynamic refs
-const inputElement = useTemplateRef("inputElement");
+const inputElement = useTemplateRef<HTMLTextAreaElement>("inputElement");
 const outputElement = useTemplateRef("outputElement");
 
 /** keep track of selected text in section */
@@ -230,6 +228,36 @@ const renderedOutput = computed(() => {
   /** convert markdown to html document */
   const document = render(markdown);
 
+  /** add figures */
+  for (const img of document.querySelectorAll("img")) {
+    /** find matching figure */
+    const figure = figures.value.find(
+      ({ filename }) =>
+        filename === window.decodeURIComponent(img.getAttribute("src") ?? ""),
+    );
+
+    /** alt text */
+    const alt = img.getAttribute("alt");
+
+    /** replace src with url */
+    if (figure) img.src = figure.uri;
+
+    /** caption content */
+    const content = figure
+      ? `<b>${figure.name}: ${figure.title}</b><br>${figure.description}`
+      : alt;
+
+    if (!content) continue;
+
+    /** create new figure elements */
+    const fig = document.createElement("figure");
+    const caption = document.createElement("figcaption");
+    caption.innerHTML = content;
+    img.replaceWith(fig);
+    fig.append(img);
+    fig.append(caption);
+  }
+
   /** add heading ids */
   for (const heading of document.querySelectorAll("h1, h2, h3, h4, h5, h6"))
     heading.id = kebabCase(heading.textContent?.trim());
@@ -265,10 +293,6 @@ const renderedOutput = computed(() => {
     if (html === document.documentElement.outerHTML) break;
   }
 
-  /** replace figure uris */
-  for (const { name, extension, uri } of figures.value)
-    html = html.replaceAll(name + extension, uri);
-
   return html;
 });
 
@@ -281,6 +305,18 @@ const uploadSections = async (files: Upload[]) => {
   toast(`Uploaded ${files.length} file(s)`, "success");
 };
 
+/** split single example markdown file into multiple sections */
+const splitExample = (text: string) =>
+  text
+    .split(/^# /gm)
+    .map((section) => section.trim())
+    .filter(Boolean)
+    .map((section) => ({
+      data: `# ${section}`,
+      name: section.split("\n").shift()?.trim() ?? "file",
+      type: "text/markdown",
+    }));
+
 const examples = {
   Blank: {
     name: "New Manuscript",
@@ -289,15 +325,7 @@ const examples = {
   },
   "Draft from skeleton w/ figs": {
     name: "Example Manuscript",
-    sections: example1
-      .split(/^# /gm)
-      .map((section) => section.trim())
-      .filter(Boolean)
-      .map((section) => ({
-        data: `# ${section}`,
-        name: section.split("\n").shift()?.trim() ?? "file",
-        type: "text/markdown",
-      })),
+    sections: splitExample(example1),
     figures: [
       { data: example1Fig1, filename: "fig-1.png", type: "image/png" },
       { data: example1Fig2, filename: "fig-2.png", type: "image/png" },
@@ -311,7 +339,7 @@ const examples = {
   },
   "Dev Test": {
     name: "Dev Test",
-    sections: [{ data: devTest, name: "Example", type: "text/markdown" }],
+    sections: splitExample(devTest),
     figures: [
       { data: example1Fig1, filename: "fig-1.png", type: "image/png" },
       { data: example1Fig2, filename: "fig-2.png", type: "image/png" },
@@ -432,11 +460,11 @@ const runAction = async ({ name, prefix, check }: Action) => {
     running.value = false;
     await nextTick();
 
-    /** re-focus section */
-    inputElement.value?.focus();
+    /** re-focus section if needed */
+    if (!inputElement.value?.matches(":focus")) inputElement.value?.focus();
 
     /** paste result into selection, w/ browser undo history */
-    document.execCommand("insertText", false, result);
+    document.execCommand("insertText", false, `\n\n${result}\n\n`);
 
     update(`Completed "${name}"`, "success");
   } catch (error) {
@@ -703,7 +731,7 @@ watch(
             v-tooltip="'Auto-name figures 1, 2, 3...'"
             @click="
               figures.forEach(
-                (figure, index) => (figure.name = `Figure ${index + 1}`),
+                (figure, index) => (figure.name = `Fig ${index + 1}`),
               );
               toast('Auto-named figures', 'success');
             "
@@ -728,14 +756,14 @@ watch(
           <div class="flex w-full flex-col gap-2">
             <div class="max-h-60 max-w-full">
               <img
-                v-tooltip="'Drag to reorder'"
+                v-tooltip="`${element.filename}<br>Drag to reorder`"
                 :src="element.uri"
                 class="h-full w-full cursor-grab border border-slate-300 object-cover"
               />
             </div>
             <div class="flex items-center gap-2">
               <input
-                :model-value="element.name"
+                :value="element.name"
                 placeholder="Name"
                 class="grow"
                 @change="
@@ -744,7 +772,6 @@ watch(
                   ).value
                 "
               />
-              <AppUploadBadge :upload="element" />
               <AppButton
                 v-tooltip="'Delete figure'"
                 @click="figures.splice(index, 1)"

@@ -1,3 +1,4 @@
+import { startCase } from "lodash";
 import {
   Image,
   ImagePlay,
@@ -71,10 +72,14 @@ export const imageAccepts = [
 export const parseFile = async (file: File) => {
   let data = "";
   let icon = Type;
+  const filename = file.name;
 
   /** split filename */
-  const [, name = file.name, extension = ""] =
-    file.name.match(/(.*)(\.[\w\d]+$)/) || [];
+  let [, name = filename, extension = ""] =
+    filename.match(/(.*)(\.[\w\d]+$)/) || [];
+
+  /** default name to "Start Case" */
+  name = startCase(name);
 
   /** parse as appropriate format */
 
@@ -107,8 +112,8 @@ export const parseFile = async (file: File) => {
   }
 
   return {
-    hash: hash([name, data].join("|")),
-    filename: file.name,
+    hash: hash(data),
+    filename,
     type: file.type,
     data,
     uri: `data:${file.type};base64,${data}`,
