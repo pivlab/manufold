@@ -1,37 +1,31 @@
-<template>
-  <AppButton v-tooltip="tooltip" :disabled="uploading" @click="onClick">
-    <LoaderCircle v-if="uploading" class="spin" />
-    <Upload v-else />
-  </AppButton>
-  <input
-    ref="input"
-    type="file"
-    :accept="accept.join(',')"
-    multiple
-    :style="{ display: 'none' }"
-    @change="onChange"
-  />
-</template>
-
 <script setup lang="ts">
-import { ref, useTemplateRef, watchEffect } from "vue";
-import { LoaderCircle, Upload } from "lucide-vue-next";
+import { computed, ref, useTemplateRef, watchEffect } from "vue";
 import { useEventListener } from "@vueuse/core";
-import { parsePdf, parseWordDoc } from "@/util/upload";
+import { LoaderCircle } from "lucide-vue-next";
 import AppButton from "@/components/AppButton.vue";
+import { parseFile } from "@/util/upload";
+import type { Upload } from "@/util/upload";
 
 type Props = {
+  /** file types to accept */
   accept: string[];
-  tooltip?: string;
+  /** what element user can drag/drop files onto */
+  dropZone?: HTMLElement | null;
+  /** tooltip directive */
+  tooltip?: unknown;
+  /** disabled */
+  disabled?: boolean;
 };
 
-defineProps<Props>();
-
-const dropZone = ref(document.body);
+const {
+  dropZone = document.body,
+  tooltip = null,
+  disabled = false,
+} = defineProps<Props>();
 
 type Emits = {
   dragging: [boolean];
-  files: [{ text: string; filename: string }[]];
+  files: [Upload[]];
 };
 
 const emit = defineEmits<Emits>();
@@ -42,8 +36,14 @@ type Slots = {
 
 defineSlots<Slots>();
 
+const buttonElement = useTemplateRef("buttonElement");
 /** actual file input element */
-const input = useTemplateRef("input");
+const inputElement = useTemplateRef("inputElement");
+
+/** reactive drop zone */
+const _dropzone = computed(
+  () => dropZone ?? buttonElement.value?.element ?? document.body,
+);
 
 /** dragging state */
 const dragging = ref(false);
@@ -54,7 +54,7 @@ const uploading = ref(false);
 /** when dragging state changes */
 watchEffect(() => {
   emit("dragging", dragging.value);
-  dropZone.value?.classList[dragging.value ? "add" : "remove"]("dragging");
+  dropZone?.classList[dragging.value ? "add" : "remove"]("dragging");
 });
 
 /** upload file(s) */
@@ -63,21 +63,9 @@ const onLoad = async (fileList: FileList | null) => {
 
   uploading.value = true;
 
-  /** parse each file as appropriate format */
+  /** parse each file */
   const files =
-    (await Promise.all(
-      [...fileList].map(async (file) => {
-        let text = "";
-
-        if (file.name.match(/\.(doc|docx)$/))
-          text = await parseWordDoc(await file.arrayBuffer());
-        else if (file.name.match(/\.(pdf)$/))
-          text = await parsePdf(await file.arrayBuffer());
-        else text = await file.text();
-
-        return { text, filename: file.name };
-      })
-    ).catch(console.warn)) ?? [];
+    (await Promise.all([...fileList].map(parseFile)).catch(console.warn)) ?? [];
 
   uploading.value = false;
 
@@ -85,26 +73,56 @@ const onLoad = async (fileList: FileList | null) => {
   if (files) emit("files", files);
 
   /** reset file input so the same file could be re-selected */
-  if (input.value) input.value.value = "";
+  if (inputElement.value) inputElement.value.value = "";
 };
 
 /** on upload button click */
-const onClick = () => input.value?.click();
+const onClick = () => inputElement.value?.click();
 
 /** on file input change */
 const onChange = (event: Event) =>
   onLoad((event.target as HTMLInputElement).files ?? null);
 
 /** track drag & drop state */
-useEventListener(dropZone, "dragenter", () => (dragging.value = true));
-useEventListener(dropZone, "dragleave", () => (dragging.value = false));
-useEventListener(dropZone, "dragover", (event) => event.preventDefault());
+useEventListener(_dropzone, "dragenter", () => (dragging.value = true));
+useEventListener(_dropzone, "dragleave", () => (dragging.value = false));
+useEventListener(_dropzone, "dragover", (event) => event.preventDefault());
 
 /** when file dropped on drop zone */
-useEventListener(dropZone, "drop", (event) => {
+useEventListener(_dropzone, "drop", (event) => {
   event.preventDefault();
   event.stopPropagation();
   dragging.value = false;
   onLoad(event.dataTransfer?.files ?? null);
 });
 </script>
+
+<template>
+  <AppButton
+    ref="buttonElement"
+    v-tooltip="tooltip"
+    design="primary"
+    :disabled="disabled || uploading"
+    @click="onClick"
+  >
+    <LoaderCircle v-if="uploading" class="animate-spin" />
+    <slot v-else />
+  </AppButton>
+  <input
+    ref="inputElement"
+    class="sr-only"
+    type="file"
+    :accept="accept.join(',')"
+    multiple
+    @change="onChange"
+  />
+</template>
+
+<style>
+@reference "tailwindcss";
+@reference "@/styles.css";
+
+.dragging {
+  @apply outline-primary opacity-50 outline-3 outline-offset-4 outline-dashed;
+}
+</style>

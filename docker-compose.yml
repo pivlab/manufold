@@ -22,4 +22,3 @@ services:
       context: ./frontend/
     environment:
       - "VITE_API=http://localhost:8900"
-      - "VITE_TITLE=Manugen AI"

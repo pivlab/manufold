@@ -121,10 +121,8 @@ VITE v6.3.5  ready in 1276 ms
 
 ### Access the frontend
 
-Use a web browser to open http://localhost:8901 and to view the frontend user interface.
+Use a web browser to open http://localhost:5173 and to view the frontend user interface.
 It might take a few seconds to establish a connection.
-
-*(FYI: Despite the port being 5173 in the logs, the Docker Compose configuration maps it to port 8901 on the host machine.)*
 
 You'll see two text fields: one on the left for entering manuscript content in Markdown, and one on the right displaying a live preview.
 

@@ -1,19 +1,21 @@
 import { fileURLToPath, URL } from "node:url";
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
-import vueDevTools from "vite-plugin-vue-devtools";
 import tailwindcss from "@tailwindcss/vite";
+import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
+import arraybuffer from "vite-plugin-arraybuffer";
 
-// https://vite.dev/config/
+// import vueDevTools from "vite-plugin-vue-devtools";
+
 export default defineConfig({
   plugins: [
-    vue(),
-    // vueDevTools(),
+    arraybuffer(),
     tailwindcss(),
+    vue(),
+    // vueDevTools()
   ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
-  }
+  },
 });

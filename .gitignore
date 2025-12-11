@@ -199,3 +199,5 @@ withdrarxiv_embeddings.duckdb
 
 # gitignore the model cache directory
 model_cache/
+
+.DS_Store

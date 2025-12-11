@@ -1,27 +1,40 @@
-<!DOCTYPE html>
-<html lang="">
+<!doctype html>
+<html lang="en-US">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>%VITE_TITLE%</title>
+    <!-- basic -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
 
+    <!-- favicons -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <!-- basic -->
+    <title>%VITE_TITLE%</title>
+    <meta name="title" content="%VITE_TITLE%" />
+    <meta name="description" content="%VITE_DESCRIPTION%" />
+
+    <!-- open graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%VITE_URL%" />
+    <meta property="og:title" content="%VITE_TITLE%" />
+    <meta property="og:description" content="%VITE_DESCRIPTION%" />
+    <meta property="og:image" content="share.jpg" />
+
+    <!-- fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Mulish:ital,wght@0,300..700;1,300..700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap"
       rel="stylesheet"
     />
-
-    <!-- favicon -->
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
   </head>
+
   <body>
-    <div id="app" class="flex flex-col min-h-screen"></div>
+    <noscript>
+      Sorry, this website doesn't work without JavaScript enabled.
+    </noscript>
+
+    <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
