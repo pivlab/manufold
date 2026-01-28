@@ -1,13 +1,13 @@
-# Manugen AI
+# Manufold (formerly, Manugen AI)
 
 <img align="left" src="packages/manugen-ai/docs/media/manugen-ai-logo.png" alt="Project Logo" width="300px" />
 
 Writing academic manuscripts can be tedious.
 Imagine that you could bring together your results, prior research, source code, and some brief bullet points per section to generate a manuscript automatically.
-That is **Manugen-AI**.
+That is **Manufold** (formerly, Manugen AI).
 
-This repo holds our submission for the 2025 [Agent Development Kit (ADK) Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/) - Manugen AI.
-**Manugen AI** is a multi-agent tool for drafting academic manuscripts from assets and guidance: a collection of figures, text/instructions, source code, and other content files.
+This repo holds our submission for the 2025 [Agent Development Kit (ADK) Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/) - Manugen AI (now Manufold).
+**Manufold** is a multi-agent tool for drafting academic manuscripts from assets and guidance: a collection of figures, text/instructions, source code, and other content files.
 It uses agents based on large language models (LLMs) and the [Google ADK](https://google.github.io/adk-docs/).
 See the [Manugen AI package README](packages/manugen-ai/README.md) for more details on the package itself.
 
