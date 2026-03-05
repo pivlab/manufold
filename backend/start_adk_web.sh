@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /packages/manugen-ai/src/manugen_ai/agents/
+cd /packages/manufold/src/manufold/agents/
 
 if [ -z "${SESSION_DB_CONN_STRING}" ]; then
     SESSION_DB_ARG=""

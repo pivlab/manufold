@@ -1,6 +1,6 @@
-# Manugen-AI Backend
+# Manufold Backend
 
-This folder implements a simple API for the frontend to invoke agents from the `manugen-ai` package, located at [packages/manugen-ai/](../packages/manugen-ai).
+This folder implements a simple API for the frontend to invoke agents from the `manufold` package, located at [packages/manufold/](../packages/manufold).
 
 While the API is intended to be run as part of the stack (see the [root README](../README.md) for details), you can run it independently on the host.
 
@@ -12,7 +12,7 @@ First, install the dependencies:
 uv sync
 ```
 
-This will install `manugen-ai` as well as other dependencies for running the FastAPI server.
+This will install `manufold` as well as other dependencies for running the FastAPI server.
 
 Then, run the API:
 
