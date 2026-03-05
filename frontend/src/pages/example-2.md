@@ -1,1 +1,1 @@
-https://github.com/pivlab/manugen-ai
+https://github.com/pivlab/manufold
