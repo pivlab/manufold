@@ -1,6 +1,6 @@
 ## Contributing
 
-Thank you for your interest in contributing to the Manugen AI project!
+Thank you for your interest in contributing to the Manufold project!
 We welcome contributions from the community to help improve and expand the functionality of this multi-agent tool for creating academic manuscripts.
 
 ### How to Contribute
