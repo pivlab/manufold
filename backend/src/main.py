@@ -1,10 +1,10 @@
 """
-FastAPI backend for Manugen AI project.
+FastAPI backend for Manufold project.
 """
 
 import os
 
-# read version number from manugen_ai package
+# read version number from manufold package
 from importlib.metadata import version
 
 import uvicorn
@@ -13,12 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .adk_api import adk_app  # Import the ADK FastAPI app
 
-MANUGEN_VERSION = version("manugen_ai")
+MANUGEN_VERSION = version("manufold")
 
 # Create FastAPI app
 app = FastAPI(
-    title="Manugen AI Backend",
-    description="A backend for the Manugen AI project, providing APIs for AI-driven manuscript generation.",
+    title="Manufold Backend",
+    description="A backend for the Manufold project, providing APIs for AI-driven manuscript generation.",
     version=MANUGEN_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -40,7 +40,7 @@ async def root():
     """Root endpoint returning basic API information."""
     root_path = os.environ.get("API_ROOT_PREFIX", "")
     return {
-        "message": "Welcome to Manugen AI Backend",
+        "message": "Welcome to Manufold Backend",
         "version": MANUGEN_VERSION,
         "docs": f"{root_path}/docs",
         "adk_api_docs": f"{root_path}/adk_api/docs",
@@ -50,7 +50,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "service": "manugen-ai-backend"}
+    return {"status": "healthy", "service": "manufold-backend"}
 
 
 @app.get("/api/v1/status")

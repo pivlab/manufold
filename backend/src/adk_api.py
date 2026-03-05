@@ -9,7 +9,7 @@ management:
 
 - (GET) /adk_api/apps/<app_name>/users/<username>/sessions
     query for all sessions for a user under <app_name> (where <app_name> is a
-    folder under ../packages/manugen-ai/src/manugen_ai/agents/)
+    folder under ../packages/manufold/src/manufold/agents/)
 - (POST) /adk_api/apps/<app_name>/users/<username>/sessions/<session_id>
     create a new session for a user under <app_name> with the given session_id
     for running agents, these two endpoints are available:
@@ -44,7 +44,7 @@ from google.adk.cli.fast_api import get_fast_api_app
 
 adk_app = get_fast_api_app(
     agents_dir=os.environ.get(
-        "MANUGEN_AGENTS_DIR", "/packages/manugen-ai/src/manugen_ai/agents/"
+        "MANUGEN_AGENTS_DIR", "/packages/manufold/src/manufold/agents/"
     ),
     session_service_uri=os.environ.get("SESSION_DB_CONN_STRING"),
     # artifact_service_uri= ,
