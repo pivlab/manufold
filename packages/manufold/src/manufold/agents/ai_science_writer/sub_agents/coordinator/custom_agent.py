@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import AsyncGenerator, Callable
 
 from google.adk.agents import BaseAgent
@@ -15,7 +16,7 @@ from ..retraction_avoidance import root_agent as retraction_avoidance_agent
 from ..reviewer import root_agent as review_agent
 
 # --- Configure Logging ---
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
 

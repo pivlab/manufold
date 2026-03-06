@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import AsyncGenerator
 
 from google.adk.agents import SequentialAgent
@@ -11,7 +12,7 @@ from ..interpreter import request_interpreter_agent
 from ..section_drafter import section_drafter_agent
 
 # --- Configure Logging ---
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
 

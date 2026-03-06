@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import AsyncGenerator
 
 from google.adk.agents import LlmAgent
@@ -18,7 +19,7 @@ from ..results import results_agent
 from ..title import title_agent
 
 # --- Configure Logging ---
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
 

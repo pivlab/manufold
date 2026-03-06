@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Optional
 
 from google.adk.agents import LlmAgent
@@ -7,7 +8,7 @@ from google.genai import types
 from manufold.schema import INSTRUCTIONS_KEY, ManuscriptStructure
 
 # --- Configure Logging ---
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
 
