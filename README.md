@@ -1,15 +1,15 @@
-# Manugen AI
+# Manufold (formerly, Manugen AI)
 
-<img align="left" src="packages/manugen-ai/docs/media/manugen-ai-logo.png" alt="Project Logo" width="300px" />
+<img align="left" src="packages/manufold/docs/media/manugen-ai-logo.png" alt="Project Logo" width="300px" />
 
 Writing academic manuscripts can be tedious.
 Imagine that you could bring together your results, prior research, source code, and some brief bullet points per section to generate a manuscript automatically.
-That is **Manugen-AI**.
+That is **Manufold** (formerly, Manugen AI).
 
-This repo holds our submission for the 2025 [Agent Development Kit (ADK) Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/) - Manugen AI.
-**Manugen AI** is a multi-agent tool for drafting academic manuscripts from assets and guidance: a collection of figures, text/instructions, source code, and other content files.
+This repo holds our submission for the 2025 [Agent Development Kit (ADK) Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/) - Manugen AI (now Manufold).
+**Manufold** is a multi-agent tool for drafting academic manuscripts from assets and guidance: a collection of figures, text/instructions, source code, and other content files.
 It uses agents based on large language models (LLMs) and the [Google ADK](https://google.github.io/adk-docs/).
-See the [Manugen AI package README](packages/manugen-ai/README.md) for more details on the package itself.
+See the [Manugen AI package README](packages/manufold/README.md) for more details on the package itself.
 
 The project consists of a web-based frontend, backend, and additional services.
 It includes Docker Compose configuration to run the application stack locally.
@@ -59,7 +59,7 @@ Make sure the model you pick [supports "tools"](https://ollama.com/search?c=tool
 ollama pull qwen3:8b
 ```
 
-If you want to use Manugen-AI to upload figures and interpret them, you'll also need a model that [supports "vision"](https://ollama.com/search?c=vision), such as [Gemma3](https://ollama.com/library/gemma3):
+If you want to use Manufold to upload figures and interpret them, you'll also need a model that [supports "vision"](https://ollama.com/search?c=vision), such as [Gemma3](https://ollama.com/library/gemma3):
 
 ```bash
 # gemma3 supports vision, which can be used to interpret your figures
@@ -128,7 +128,7 @@ You'll see two text fields: one on the left for entering manuscript content in M
 
 ### Draft a manuscript
 
-Manugen-AI allows a human author to quickly draft a scientific manuscript from a minimum set of research assets (such as figures or source code) and human guidance.
+Manufold allows a human author to quickly draft a scientific manuscript from a minimum set of research assets (such as figures or source code) and human guidance.
 After opening the web interface in your browser, follow these steps to draft a manuscript from scratch:
 
 1. **Load an example of human guidelines.**
@@ -172,7 +172,7 @@ Does your research involve the use of a version controlled repository (for examp
 You can use Manugen AI to create a manuscript by passing the URL for the project with the "Repos" action.
 
 1. Within the frontend, refresh your browser so you start with an empty session.
-1. On the left panel, paste in a GitHub URL (e.g. `https://github.com/pivlab/manugen-ai`).
+1. On the left panel, paste in a GitHub URL (e.g. `https://github.com/pivlab/manufold`).
 1. Highlight the GitHub URL and click the "Repos" action.
 1. Manugen AI agents will absorb information about your repository and provide a draft manuscript in return.
 
@@ -205,7 +205,7 @@ The project is a standard three-tier web application, with the following compone
 
 - `./frontend/`: A web-based user interface for interacting with the application, built with React.
 - `./backend/`: A REST API that serves the frontend and handles requests from the web interface.
-- `./packages/manugen-ai/`: The *Manugen AI* package, which is used to generate academic manuscripts from content files.
+- `./packages/manufold/`: The *Manufold* package, which is used to generate academic manuscripts from content files.
   The backend relies on this package to perform the actual manuscript generation.
 
 The project includes an optional PostgreSQL database that, if available, ADK will use to persist session data between stack runs.
