@@ -172,7 +172,7 @@ Does your research involve the use of a version controlled repository (for examp
 You can use Manugen AI to create a manuscript by passing the URL for the project with the "Repos" action.
 
 1. Within the frontend, refresh your browser so you start with an empty session.
-1. On the left panel, paste in a GitHub URL (e.g. `https://github.com/pivlab/manugen-ai`).
+1. On the left panel, paste in a GitHub URL (e.g. `https://github.com/pivlab/manufold`).
 1. Highlight the GitHub URL and click the "Repos" action.
 1. Manugen AI agents will absorb information about your repository and provide a draft manuscript in return.
 
