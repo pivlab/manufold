@@ -4,8 +4,8 @@ services:
       - "8900:8000"
     volumes:
       # maps package, src folders to allow reloading
-      - ./packages/manugen-ai/src/:/packages/manugen-ai/src/
-      - ./packages/manugen-ai/tests/:/packages/manugen-ai/tests/
+      - ./packages/manufold/src/:/packages/manufold/src/
+      - ./packages/manufold/tests/:/packages/manufold/tests/
       - ./backend/src/:/app/src/
       - ./backend/tests/:/app/tests/
     environment:
