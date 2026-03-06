@@ -29,12 +29,12 @@ if [ "${HOT_RELOAD_BACKEND}" = "1" ]; then
         --host 0.0.0.0 \
         --port ${MANUGEN_API_PORT} \
         --reload \
-        --log-level ${DEBUG_LOG_LEVEL:-info}
+        --log-level ${LOG_LEVEL:-info}
 else
     # run in production mode
     exec uv run uvicorn src.main:app \
         --host 0.0.0.0 \
         --port ${MANUGEN_API_PORT} \
         --workers ${WEB_CONCURRENCY:-8} \
-        --log-level warning
+        --log-level ${LOG_LEVEL:-info}
 fi
