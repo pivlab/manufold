@@ -39,7 +39,7 @@ jobs:
       - name: Run pytest
         # cd into the packages dir and run pytest
         # note: we skip notebooks as these are for reporting only.
-        run: cd packages/manugen-ai && uv run --frozen pytest -m "not notebooks"
+        run: cd packages/manufold && uv run --frozen pytest -m "not notebooks"
         env:
           # use the same models here to keep ci run duration low
           # by avoiding extra downloads
