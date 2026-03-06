@@ -197,6 +197,9 @@ withdrarxiv.parquet
 retraction_watch.csv
 withdrarxiv_embeddings.duckdb
 
+# ignore session db, wherever it ends up being created
+session.db
+
 # gitignore the model cache directory
 model_cache/
 
