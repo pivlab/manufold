@@ -10,6 +10,7 @@ services:
       - ./backend/tests/:/app/tests/
     environment:
       - HOT_RELOAD_BACKEND=1
+      - LOG_LEVEL=warning
 
   frontend:
     ports:
