@@ -103,7 +103,7 @@ MANUGENAI_FIGURE_MODEL_NAME="ollama/gemma3:4b"
 Run the following command:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.with-pg.yml -f docker-compose.override.yml up --build
+./run_stack.sh
 ```
 
 This will build the Docker images and start the application.
@@ -234,7 +234,7 @@ Visit http://localhost:8900 in your web browser to access the backend API; docs 
 If you want to clear the session state, you can run the following command to stop any application containers that are running and remove the database volume:
 
 ```bash
-docker compose down -v
+./run_stack.sh down -v
 ```
 
 This will purge any sessions or other data that ADK stores to the database.
@@ -257,15 +257,19 @@ The production configuration differs from the development configuration in a few
 To launch the production version of the app, you can run the following command:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.with-pg.yml -f docker-compose.prod.yml up --build -d
+./run_stack.sh prod
 ```
+
+(You can also change `DEFAULT_ENV` in your `.env` file to `prod` and then just run `./run_stack.sh` without the `prod` argument.)
 
 This will build the production images and start the application in detached mode.
 
-To tail the container logs, you can run:
+It will then tail the logs of all the containers, but you can exit by pressing `Ctrl+C` (the containers will keep running in the background).
+
+To bring down the production app, you can run the following command:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.with-pg.yml -f docker-compose.prod.yml logs -f
+./run_stack.sh prod down
 ```
 
 - *For project members: [internal planning doc](https://olucdenver.sharepoint.com/:w:/r/sites/CenterforHealthAI939-SoftwareEngineering/Shared%20Documents/Software%20Engineering/Projects/PivLab%20-%20ADK%20Hackathon/Agent%20Development%20Kit%20Hackathon%20with%20Google%20Cloud.docx?d=w0cfff935f2754c3492489ef5b15fe2f4&csf=1&web=1&e=NRM3en)*
