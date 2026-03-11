@@ -9,6 +9,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+  "asyncpg>=0.31",
   "fastapi>=0.104",
   "manufold",
   "uvicorn[standard]>=0.24",
