@@ -103,7 +103,7 @@ MANUGENAI_FIGURE_MODEL_NAME="ollama/gemma3:4b"
 Run the following command:
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.with-pg.yml -f docker-compose.override.yml up --build
 ```
 
 This will build the Docker images and start the application.
@@ -257,7 +257,7 @@ The production configuration differs from the development configuration in a few
 To launch the production version of the app, you can run the following command:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+docker compose -f docker-compose.yml -f docker-compose.with-pg.yml -f docker-compose.prod.yml up --build -d
 ```
 
 This will build the production images and start the application in detached mode.
@@ -265,7 +265,7 @@ This will build the production images and start the application in detached mode
 To tail the container logs, you can run:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+docker compose -f docker-compose.yml -f docker-compose.with-pg.yml -f docker-compose.prod.yml logs -f
 ```
 
 - *For project members: [internal planning doc](https://olucdenver.sharepoint.com/:w:/r/sites/CenterforHealthAI939-SoftwareEngineering/Shared%20Documents/Software%20Engineering/Projects/PivLab%20-%20ADK%20Hackathon/Agent%20Development%20Kit%20Hackathon%20with%20Google%20Cloud.docx?d=w0cfff935f2754c3492489ef5b15fe2f4&csf=1&web=1&e=NRM3en)*
