@@ -77,8 +77,8 @@ esac
 
 # if we have any remaining arguments, override the compose command with them
 if [ $# -gt 0 ]; then
-  echo "Overriding compose command with: $@"
-  COMPOSE_CMD="$@"
+  echo "Overriding compose command with: $*"
+  COMPOSE_CMD="$*"
 fi
 
 docker compose ${COMPOSE_FILES} ${COMPOSE_CMD} && \
