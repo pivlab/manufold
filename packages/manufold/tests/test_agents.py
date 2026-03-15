@@ -5,11 +5,11 @@ Tests for various agents
 import re
 
 import pytest
-from manugen_ai.agents.ai_science_writer.sub_agents.citations.agent import (
+from manufold.agents.ai_science_writer.sub_agents.citations.agent import (
     root_agent as citations_agent,
 )
-from manugen_ai.agents.capitalizer.agent import root_agent as capitalizer_agent
-from manugen_ai.utils import run_agent_workflow
+from manufold.agents.capitalizer.agent import root_agent as capitalizer_agent
+from manufold.utils import run_agent_workflow
 
 
 @pytest.mark.asyncio
