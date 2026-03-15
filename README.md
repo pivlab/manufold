@@ -1,15 +1,15 @@
-# Manugen AI
+# Manufold (formerly, Manugen AI)
 
-<img align="left" src="packages/manugen-ai/docs/media/manugen-ai-logo.png" alt="Project Logo" width="300px" />
+<img align="left" src="packages/manufold/docs/media/manugen-ai-logo.png" alt="Project Logo" width="300px" />
 
 Writing academic manuscripts can be tedious.
 Imagine that you could bring together your results, prior research, source code, and some brief bullet points per section to generate a manuscript automatically.
-That is **Manugen-AI**.
+That is **Manufold** (formerly, Manugen AI).
 
-This repo holds our submission for the 2025 [Agent Development Kit (ADK) Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/) - Manugen AI.
-**Manugen AI** is a multi-agent tool for drafting academic manuscripts from assets and guidance: a collection of figures, text/instructions, source code, and other content files.
+This repo holds our submission for the 2025 [Agent Development Kit (ADK) Hackathon with Google Cloud](https://googlecloudmultiagents.devpost.com/) - Manugen AI (now Manufold).
+**Manufold** is a multi-agent tool for drafting academic manuscripts from assets and guidance: a collection of figures, text/instructions, source code, and other content files.
 It uses agents based on large language models (LLMs) and the [Google ADK](https://google.github.io/adk-docs/).
-See the [Manugen AI package README](packages/manugen-ai/README.md) for more details on the package itself.
+See the [Manugen AI package README](packages/manufold/README.md) for more details on the package itself.
 
 The project consists of a web-based frontend, backend, and additional services.
 It includes Docker Compose configuration to run the application stack locally.
@@ -59,7 +59,7 @@ Make sure the model you pick [supports "tools"](https://ollama.com/search?c=tool
 ollama pull qwen3:8b
 ```
 
-If you want to use Manugen-AI to upload figures and interpret them, you'll also need a model that [supports "vision"](https://ollama.com/search?c=vision), such as [Gemma3](https://ollama.com/library/gemma3):
+If you want to use Manufold to upload figures and interpret them, you'll also need a model that [supports "vision"](https://ollama.com/search?c=vision), such as [Gemma3](https://ollama.com/library/gemma3):
 
 ```bash
 # gemma3 supports vision, which can be used to interpret your figures
@@ -103,7 +103,7 @@ MANUGENAI_FIGURE_MODEL_NAME="ollama/gemma3:4b"
 Run the following command:
 
 ```bash
-docker compose up --build
+./run_stack.sh
 ```
 
 This will build the Docker images and start the application.
@@ -121,16 +121,14 @@ VITE v6.3.5  ready in 1276 ms
 
 ### Access the frontend
 
-Use a web browser to open http://localhost:8901 and to view the frontend user interface.
+Use a web browser to open http://localhost:5173 and to view the frontend user interface.
 It might take a few seconds to establish a connection.
-
-*(FYI: Despite the port being 5173 in the logs, the Docker Compose configuration maps it to port 8901 on the host machine.)*
 
 You'll see two text fields: one on the left for entering manuscript content in Markdown, and one on the right displaying a live preview.
 
 ### Draft a manuscript
 
-Manugen-AI allows a human author to quickly draft a scientific manuscript from a minimum set of research assets (such as figures or source code) and human guidance.
+Manufold allows a human author to quickly draft a scientific manuscript from a minimum set of research assets (such as figures or source code) and human guidance.
 After opening the web interface in your browser, follow these steps to draft a manuscript from scratch:
 
 1. **Load an example of human guidelines.**
@@ -174,7 +172,7 @@ Does your research involve the use of a version controlled repository (for examp
 You can use Manugen AI to create a manuscript by passing the URL for the project with the "Repos" action.
 
 1. Within the frontend, refresh your browser so you start with an empty session.
-1. On the left panel, paste in a GitHub URL (e.g. `https://github.com/pivlab/manugen-ai`).
+1. On the left panel, paste in a GitHub URL (e.g. `https://github.com/pivlab/manufold`).
 1. Highlight the GitHub URL and click the "Repos" action.
 1. Manugen AI agents will absorb information about your repository and provide a draft manuscript in return.
 
@@ -207,7 +205,7 @@ The project is a standard three-tier web application, with the following compone
 
 - `./frontend/`: A web-based user interface for interacting with the application, built with React.
 - `./backend/`: A REST API that serves the frontend and handles requests from the web interface.
-- `./packages/manugen-ai/`: The *Manugen AI* package, which is used to generate academic manuscripts from content files.
+- `./packages/manufold/`: The *Manufold* package, which is used to generate academic manuscripts from content files.
   The backend relies on this package to perform the actual manuscript generation.
 
 The project includes an optional PostgreSQL database that, if available, ADK will use to persist session data between stack runs.
@@ -236,7 +234,7 @@ Visit http://localhost:8900 in your web browser to access the backend API; docs 
 If you want to clear the session state, you can run the following command to stop any application containers that are running and remove the database volume:
 
 ```bash
-docker compose down -v
+./run_stack.sh down -v
 ```
 
 This will purge any sessions or other data that ADK stores to the database.
@@ -259,15 +257,19 @@ The production configuration differs from the development configuration in a few
 To launch the production version of the app, you can run the following command:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+./run_stack.sh prod
 ```
+
+(You can also change `DEFAULT_ENV` in your `.env` file to `prod` and then just run `./run_stack.sh` without the `prod` argument.)
 
 This will build the production images and start the application in detached mode.
 
-To tail the container logs, you can run:
+It will then tail the logs of all the containers, but you can exit by pressing `Ctrl+C` (the containers will keep running in the background).
+
+To bring down the production app, you can run the following command:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+./run_stack.sh prod down
 ```
 
 - *For project members: [internal planning doc](https://olucdenver.sharepoint.com/:w:/r/sites/CenterforHealthAI939-SoftwareEngineering/Shared%20Documents/Software%20Engineering/Projects/PivLab%20-%20ADK%20Hackathon/Agent%20Development%20Kit%20Hackathon%20with%20Google%20Cloud.docx?d=w0cfff935f2754c3492489ef5b15fe2f4&csf=1&web=1&e=NRM3en)*

@@ -1,40 +1,35 @@
+<script setup lang="ts">
+import { useTemplateRef } from "vue";
+
+type Props = {
+  design?: "primary" | "secondary" | "active";
+};
+
+const { design = "secondary" } = defineProps<Props>();
+
+const element = useTemplateRef("element");
+
+defineExpose({ element });
+</script>
+
 <template>
   <button
-    :class="activeClasses"
+    ref="element"
+    class="relative min-h-8 min-w-8! rounded-full"
+    :class="[
+      design === 'primary' || design === 'active'
+        ? 'bg-primary text-white hover:bg-slate-700'
+        : 'text-primary hover:text-slate-700',
+    ]"
   >
     <slot />
   </button>
 </template>
 
-<script setup lang="ts">
-
-import { defineProps, computed } from 'vue';
-
-type PropTypes = {
-  isActive?: boolean
-};
-
-const activeClasses = computed(() => {
-  return {
-    'flex': true,
-    'justify-center': true,
-    'items-center': true,
-    'min-w-10': true,
-    'min-h-10': true,
-    'bg-indigo-500': !props.isActive,
-    'bg-indigo-900': props.isActive,
-    'text-white': true,
-    'rounded-full': true,
-    'hover:bg-indigo-400': true,
-    'transition-all': true,
-  }
-});
-
-const props = defineProps<PropTypes>();
-</script>
-
 <style scoped>
-button :deep(.lucide) {
-  height: 1.25em;
+@reference "tailwindcss";
+
+button:has(span) {
+  @apply px-2;
 }
 </style>

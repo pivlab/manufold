@@ -4,16 +4,17 @@ services:
       - "8900:8000"
     volumes:
       # maps package, src folders to allow reloading
-      - ./packages/manugen-ai/src/:/packages/manugen-ai/src/
-      - ./packages/manugen-ai/tests/:/packages/manugen-ai/tests/
+      - ./packages/manufold/src/:/packages/manufold/src/
+      - ./packages/manufold/tests/:/packages/manufold/tests/
       - ./backend/src/:/app/src/
       - ./backend/tests/:/app/tests/
     environment:
       - HOT_RELOAD_BACKEND=1
+      - LOG_LEVEL=warning
 
   frontend:
     ports:
-      - "8901:5173"
+      - "5173:5173"
     volumes:
       # map the src folder to allow hot reloading
       - ./frontend/src/:/app/src/

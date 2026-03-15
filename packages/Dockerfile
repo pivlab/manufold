@@ -9,12 +9,12 @@ WORKDIR /app
 
 # Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=manugen-ai/uv.lock,target=uv.lock \
-    --mount=type=bind,source=manugen-ai/pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=manufold/uv.lock,target=uv.lock \
+    --mount=type=bind,source=manufold/pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project
 
 # Copy the project into the image
-ADD ./manugen-ai/ /app
+ADD ./manufold/ /app
 
 # Sync the project
 RUN --mount=type=cache,target=/root/.cache/uv \

@@ -1,28 +1,86 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@import "floating-vue/dist/style.css";
 
-* {
-  font-family: "Mullish", sans-serif;
+@theme {
+  --color-primary: #ad1457;
+  --color-secondary: #ffedd5;
+
+  --font-sans: "Raleway", sans-serif;
+  --font-mono: "Inconsolata", monospace;
+
+  --shadow-overlay: 0 0 0 9999px #00000040;
+}
+
+html {
+  @apply font-sans;
+}
+
+#app {
+  @apply flex min-h-screen flex-col;
 }
 
 button {
-  cursor: pointer;
+  @apply inline-flex cursor-pointer items-center justify-center gap-2;
 }
 
-.dragging {
-  @apply inset-ring-4 inset-ring-indigo-500;
+input {
+  @apply min-h-8 min-w-0 border-b border-slate-300 p-2;
+}
+
+textarea {
+  @apply min-h-8 rounded border border-slate-300 p-2;
+}
+
+[disabled] {
+  @apply pointer-events-none opacity-50 grayscale;
+}
+
+.truncate-lines:not(:focus) {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  display: -webkit-box;
+  @apply max-w-full cursor-zoom-in overflow-hidden;
+}
+
+.truncate-lines:focus {
+  @apply rounded border border-slate-300 p-2;
 }
 
 .lucide {
-  width: unset;
-  height: 1em;
+  @apply h-[1em] w-[unset];
 }
 
-.tippy-box {
-  font: inherit !important;
-  @apply rounded-md;
+body.v-popper--some-open--dropdown iframe {
+  @apply pointer-events-none;
 }
 
-.tippy-content:has(:nth-child(1)) {
-  padding: 0 !important;
+.v-popper--theme-tooltip,
+.v-popper--theme-dropdown {
+  @apply duration-100!;
+}
+
+.v-popper--theme-tooltip .v-popper__inner {
+  @apply rounded! border-none! bg-slate-700! px-4! py-2! text-white! shadow-none!;
+}
+
+.v-popper--theme-tooltip .v-popper__arrow-outer {
+  @apply border-slate-700!;
+}
+
+.v-popper--theme-dropdown .v-popper__inner {
+  @apply shadow-overlay! rounded! border-none! bg-white! p-2!;
+}
+
+.v-popper--theme-dropdown .v-popper__arrow-outer {
+  @apply border-none!;
+}
+
+.v-popper--theme-dropdown .v-popper__arrow-inner {
+  @apply border-white!;
+}
+
+.sortable-ghost,
+.sortable-chosen {
+  @apply opacity-25 grayscale;
 }

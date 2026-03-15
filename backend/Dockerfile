@@ -3,7 +3,7 @@
 # copied from https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers
 
 # note that this Dockerfile's context should be set to the project root, due to
-# the fact that it relies on a package under /packages/manugen-ai
+# the fact that it relies on a package under /packages/manufold
 # all backend-specific path refs should be prefixed with `backend/`
 
 # Install uv
@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Change the working directory to the `app` directory
 WORKDIR /app
 
-# copy packages/manugen-ai into /opt/manugen-ai
-COPY --exclude=.venv ./packages/manugen-ai/ /packages/manugen-ai/
+# copy packages/manufold into /opt/manufold
+COPY --exclude=.venv ./packages/manufold/ /packages/manufold/
 
 # Install dependencies
 ENV VIRTUAL_ENV=/app/.venv
